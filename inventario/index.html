@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inventario Pactra — Sistema de Movimientos</title>
+    <meta name="description" content="Sistema de gestión de inventario y movimientos de productos para Pactra." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="packing.css" />
+
+</head>
+
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <span class="logo-icon">📦</span>
+                <span class="logo-text">PACTRA</span>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle" title="Colapsar menú">&#9776;</button>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-view="dashboard" id="nav-dashboard">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-view="movimientos" id="nav-movimientos">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">Movimientos</span>
+            </a>
+            <a href="#" class="nav-item" data-view="dañados" id="nav-dañados">
+                <span class="nav-icon">⚠️</span>
+                <span class="nav-label">Dañados</span>
+                <span class="badge" id="badge-danos">0</span>
+            </a>
+            <a href="#" class="nav-item" data-view="por-modelo" id="nav-por-modelo">
+                <span class="nav-icon">🔩</span>
+                <span class="nav-label">Por Modelo</span>
+            </a>
+            <a href="#" class="nav-item" data-view="packing" id="nav-packing">
+                <span class="nav-icon">📄</span>
+                <span class="nav-label">Packing List</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <span class="version">v1.0.0</span>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main" id="main">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <h1 class="page-title" id="pageTitle">Dashboard</h1>
+            </div>
+            <div class="topbar-right">
+                <div class="topbar-date" id="topbarDate"></div>
+                <button class="btn btn-secondary" id="btnImport" title="Importar Excel o CSV">
+                    <span>📥</span> Importar
+                </button>
+                <button class="btn btn-primary" id="btnNuevo">
+                    <span>＋</span> Nuevo Movimiento
+                </button>
+            </div>
+        </header>
+
+        <!-- VIEWS -->
+        <div class="content">
+
+            <!-- ===== DASHBOARD VIEW ===== -->
+            <section class="view active" id="view-dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card" id="stat-total">
+                        <div class="stat-icon">📦</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statTotal">0</span>
+                            <span class="stat-label">Total Movimientos</span>
+                        </div>
+                    </div>
+                    <div class="stat-card" id="stat-entradas">
+                        <div class="stat-icon">⬇️</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statEntradas">0</span>
+                            <span class="stat-label">Entradas</span>
+                        </div>
+                    </div>
+                    <div class="stat-card" id="stat-salidas">
+                        <div class="stat-icon">⬆️</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statSalidas">0</span>
+                            <span class="stat-label">Salidas</span>
+                        </div>
+                    </div>
+                    <div class="stat-card danger" id="stat-danos">
+                        <div class="stat-icon">⚠️</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statDanos">0</span>
+                            <span class="stat-label">Con Daños</span>
+                        </div>
+                    </div>
+                    <div class="stat-card info" id="stat-pallets">
+                        <div class="stat-icon">🏗️</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statPallets">0</span>
+                            <span class="stat-label">Total Pallets</span>
+                        </div>
+                    </div>
+                    <div class="stat-card success" id="stat-piezas">
+                        <div class="stat-icon">🔩</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statPiezas">0</span>
+                            <span class="stat-label">Total Piezas</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-bottom">
+                    <div class="recent-table-wrapper">
+                        <div class="section-header">
+                            <h2>Movimientos Recientes</h2>
+                        </div>
+                        <div class="table-scroll">
+                            <table class="data-table" id="recentTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Tipo</th>
+                                        <th>Fecha</th>
+                                        <th>Cliente</th>
+                                        <th>Modelo</th>
+                                        <th>Piezas</th>
+                                        <th>Dañado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentTbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="tipo-breakdown">
+                        <div class="section-header">
+                            <h2>Por Tipo de Movimiento</h2>
+                        </div>
+                        <div id="tipoBreakdown" class="breakdown-list"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== MOVIMIENTOS VIEW ===== -->
+            <section class="view" id="view-movimientos">
+                <div class="toolbar">
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="searchInput"
+                            placeholder="Buscar por cliente, modelo, factura, contenedor..." />
+                    </div>
+                    <div class="filter-group">
+                        <select id="filterTipo" title="Filtrar por tipo">
+                            <option value="">Todos los tipos</option>
+                            <option value="Entrada">Entrada</option>
+                            <option value="Salida">Salida</option>
+                            <option value="Transferencia">Transferencia</option>
+                            <option value="Devolución">Devolución</option>
+                            <option value="Ajuste">Ajuste</option>
+                        </select>
+                        <select id="filterDanado" title="Filtrar por daño">
+                            <option value="">Con y sin daño</option>
+                            <option value="si">Con daño</option>
+                            <option value="no">Sin daño</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-secondary" id="btnExport" title="Exportar a CSV">
+                        ⬇ Exportar CSV
+                    </button>
+                </div>
+
+                <div class="table-scroll">
+                    <table class="data-table" id="mainTable">
+                        <thead>
+                            <tr>
+                                <th data-col="id_movimiento" class="sortable">ID <span class="sort-arrow">↕</span></th>
+                                <th data-col="tipo_movimiento" class="sortable">Tipo <span class="sort-arrow">↕</span>
+                                </th>
+                                <th data-col="fecha" class="sortable">Fecha <span class="sort-arrow">↕</span></th>
+                                <th data-col="cliente">Cliente</th>
+                                <th data-col="contenedor">Contenedor</th>
+                                <th data-col="factura">Factura</th>
+                                <th data-col="modelo">Modelo</th>
+                                <th data-col="no_lote">No. Lote</th>
+                                <th data-col="pallets" class="sortable">Pallets <span class="sort-arrow">↕</span></th>
+                                <th data-col="piezas" class="sortable">Piezas <span class="sort-arrow">↕</span></th>
+                                <th data-col="dañado">Dañado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mainTbody"></tbody>
+                    </table>
+                </div>
+                <div class="table-footer">
+                    <span id="recordCount">0 registros</span>
+                    <div class="pagination" id="pagination"></div>
+                </div>
+            </section>
+
+            <!-- ===== DAÑADOS VIEW ===== -->
+            <section class="view" id="view-dañados">
+                <div class="alert-banner">
+                    <span>⚠️</span>
+                    <span>Estos registros contienen artículos marcados como <strong>dañados</strong>. Requieren
+                        atención.</span>
+                </div>
+                <div class="table-scroll">
+                    <table class="data-table" id="danosTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tipo</th>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Contenedor</th>
+                                <th>Factura</th>
+                                <th>Modelo</th>
+                                <th>No. Lote</th>
+                                <th>Pallets</th>
+                                <th>Piezas</th>
+                                <th>Dañado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="danosTbody"></tbody>
+                    </table>
+                </div>
+                <div class="table-footer">
+                    <span id="danosCount">0 registros</span>
+                </div>
+            </section>
+
+            <!-- ===== POR MODELO VIEW ===== -->
+            <section class="view" id="view-por-modelo">
+
+                <!-- Toolbar modelo -->
+                <div class="toolbar">
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="modeloSearch" placeholder="Buscar modelo..." />
+                    </div>
+                    <div class="filter-group">
+                        <select id="modeloSort" title="Ordenar por">
+                            <option value="modelo">Ordenar: Modelo A–Z</option>
+                            <option value="piezas_desc">Ordenar: Más piezas</option>
+                            <option value="movimientos_desc">Ordenar: Más movimientos</option>
+                            <option value="danos_desc">Ordenar: Más dañados</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-secondary" id="btnExportModelo" title="Exportar resumen por modelo">
+                        ⬇ Exportar CSV
+                    </button>
+                </div>
+
+                <!-- Cards de modelo -->
+                <div class="modelo-grid" id="modeloGrid"></div>
+
+                <!-- Detalle de movimientos del modelo seleccionado -->
+                <div class="modelo-detalle" id="modeloDetalle" style="display:none">
+                    <div class="modelo-detalle-header">
+                        <div class="detalle-title-row">
+                            <h2 id="modeloDetalleTitulo">Movimientos del modelo</h2>
+                            <button class="btn btn-ghost btn-sm" id="btnCerrarDetalle">✕ Cerrar</button>
+                        </div>
+                    </div>
+                    <div class="table-scroll">
+                        <table class="data-table" id="modeloDetalleTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tipo</th>
+                                    <th>Fecha</th>
+                                    <th>Cliente</th>
+                                    <th>Contenedor</th>
+                                    <th>Factura</th>
+                                    <th>No. Lote</th>
+                                    <th>Pallets</th>
+                                    <th>Piezas</th>
+                                    <th>Dañado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modeloDetalleTbody"></tbody>
+                        </table>
+                    </div>
+                    <div class="table-footer">
+                        <span id="modeloDetalleCount">0 registros</span>
+                    </div>
+                </div>
+
+                <div class="table-footer" style="margin-top:12px">
+                    <span id="modeloCount">0 modelos</span>
+                </div>
+            </section>
+
+            <!-- ===== PACKING LIST VIEW ===== -->
+            <section id="view-packing" class="view">
+                <div class="view-header">
+                    <div class="toolbar">
+                        <div class="toolbar-left">
+                            <h2 style="font-size:15px;font-weight:700">Generar Packing List — Daewon</h2>
+                        </div>
+                        <div class="toolbar-right">
+                            <button class="btn btn-secondary" id="btnResetPacking" type="button">🔄 Limpiar</button>
+                            <button class="btn btn-primary" id="btnGenerarPDF" type="button">📄 Generar PDF</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="packing-wrap">
+                    <form id="packingForm" class="packing-form">
+
+                        <!-- Row 1 -->
+                        <div class="pk-row">
+                            <div class="form-group">
+                                <label>Cliente</label>
+                                <input type="text" id="pk_cliente" value="DAEWON" readonly class="pk-readonly" />
+                            </div>
+                            <div class="form-group">
+                                <label>Modelo *</label>
+                                <select id="pk_modelo">
+                                    <option value="">— Cargando... —</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Invoice No.</label>
+                                <input type="text" id="pk_invoice_no" placeholder="Ej. PACT-2024-001" />
+                            </div>
+                            <div class="form-group">
+                                <label>Invoice Date</label>
+                                <input type="date" id="pk_invoice_date" />
+                            </div>
+                        </div>
+
+                        <!-- Row 2 -->
+                        <div class="pk-row">
+                            <div class="form-group">
+                                <label>Contenedor</label>
+                                <select id="pk_container">
+                                    <option value="">— Selecciona modelo —</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>No. Lote</label>
+                                <input type="text" id="pk_lote" placeholder="Número de lote" />
+                            </div>
+                            <div class="form-group">
+                                <label>Ciudad destino</label>
+                                <input type="text" id="pk_ciudad" placeholder="Ej. Pyeongtaek, Korea" />
+                            </div>
+                            <div class="form-group">
+                                <label>Dirección cliente</label>
+                                <input type="text" id="pk_direccion" placeholder="Dirección de Daewon" />
+                            </div>
+                        </div>
+
+                        <!-- Row 3: steppers -->
+                        <div class="pk-row">
+                            <div class="form-group">
+                                <label>Pallets</label>
+                                <div class="pk-stepper">
+                                    <button type="button" class="stepper-btn"
+                                        onclick="pkStep('pk_pallets',-1)">−</button>
+                                    <input type="number" id="pk_pallets" value="0" min="0" />
+                                    <button type="button" class="stepper-btn"
+                                        onclick="pkStep('pk_pallets',1)">+</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Sacos</label>
+                                <div class="pk-stepper">
+                                    <button type="button" class="stepper-btn" onclick="pkStep('pk_sacos',-1)">−</button>
+                                    <input type="number" id="pk_sacos" value="0" min="0" />
+                                    <button type="button" class="stepper-btn" onclick="pkStep('pk_sacos',1)">+</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Peso Neto (kg)</label>
+                                <div class="pk-stepper">
+                                    <button type="button" class="stepper-btn" onclick="pkStep('pk_peso',-1)">−</button>
+                                    <input type="number" id="pk_peso" value="0" min="0" step="0.01" />
+                                    <button type="button" class="stepper-btn" onclick="pkStep('pk_peso',1)">+</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Peso Bruto (kg)</label>
+                                <input type="number" id="pk_peso_bruto" value="0" min="0" step="0.01" />
+                            </div>
+                        </div>
+
+                        <!-- Row 4 -->
+                        <div class="pk-row">
+                            <div class="form-group">
+                                <label>Truck (Camión)</label>
+                                <input type="text" id="pk_truck" placeholder="No. económico o nombre" />
+                            </div>
+                            <div class="form-group">
+                                <label>Driver (Conductor)</label>
+                                <input type="text" id="pk_driver" placeholder="Nombre del conductor" />
+                            </div>
+                            <div class="form-group">
+                                <label>Plates (Placas)</label>
+                                <input type="text" id="pk_plates" placeholder="Placas del vehículo" />
+                            </div>
+                            <div class="form-group">
+                                <label>Remarks (Observaciones)</label>
+                                <input type="text" id="pk_remarks" placeholder="Opcional" />
+                            </div>
+                        </div>
+
+                    </form>
+
+                    <!-- Live preview -->
+                    <div class="packing-preview-box" id="packingPreviewBox">
+                        <div class="packing-preview-header">
+                            <span>👁 Vista previa</span>
+                        </div>
+                        <div class="packing-preview-body" id="packingPreviewBody"></div>
+                    </div>
+                </div>
+            </section>
+
+        </div><!-- /content -->
+    </main>
+
+    <!-- ===== MODAL ===== -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modal">
+            <div class="modal-header">
+                <h2 id="modalTitle">Nuevo Movimiento</h2>
+                <button class="modal-close" id="modalClose">✕</button>
+            </div>
+            <form class="modal-body" id="movForm" autocomplete="off">
+                <input type="hidden" id="editId" />
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="f_tipo">Tipo de Movimiento <span class="required">*</span></label>
+                        <select id="f_tipo" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="Entrada">Entrada</option>
+                            <option value="Salida">Salida</option>
+                            <option value="Transferencia">Transferencia</option>
+                            <option value="Devolución">Devolución</option>
+                            <option value="Ajuste">Ajuste</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="f_fecha">Fecha <span class="required">*</span></label>
+                        <input type="date" id="f_fecha" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="f_cliente">Cliente</label>
+                        <input type="text" id="f_cliente" placeholder="Nombre del cliente" />
+                    </div>
+                    <div class="form-group">
+                        <label for="f_contenedor">Contenedor</label>
+                        <input type="text" id="f_contenedor" placeholder="Ej. CONT-0001" />
+                    </div>
+                    <div class="form-group">
+                        <label for="f_factura">Factura</label>
+                        <input type="text" id="f_factura" placeholder="No. de factura" />
+                    </div>
+                    <div class="form-group">
+                        <label for="f_modelo">Modelo</label>
+                        <input type="text" id="f_modelo" placeholder="Modelo del producto" />
+                    </div>
+                    <div class="form-group">
+                        <label for="f_lote">No. Lote</label>
+                        <input type="text" id="f_lote" placeholder="Número de lote" />
+                    </div>
+                    <div class="form-group">
+                        <label for="f_pallets">Pallets</label>
+                        <input type="number" id="f_pallets" min="0" placeholder="0" />
+                    </div>
+                    <div class="form-group">
+                        <label for="f_piezas">Piezas</label>
+                        <input type="number" id="f_piezas" min="0" placeholder="0" />
+                    </div>
+                    <div class="form-group">
+                        <label for="f_piezas_danadas">Piezas Dañadas</label>
+                        <input type="number" id="f_piezas_danadas" min="0" placeholder="0" />
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" id="btnCancelar">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btnGuardar">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CONFIRM DIALOG -->
+    <div class="modal-overlay" id="confirmOverlay">
+        <div class="modal confirm-modal">
+            <div class="confirm-icon">🗑️</div>
+            <h3>¿Eliminar registro?</h3>
+            <p>Esta acción no se puede deshacer.</p>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" id="confirmNo">Cancelar</button>
+                <button class="btn btn-danger" id="confirmYes">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ===== IMPORT MODAL ===== -->
+    <div class="modal-overlay" id="importOverlay">
+        <div class="modal import-modal">
+            <div class="modal-header">
+                <h2>📥 Importar Datos</h2>
+                <button class="modal-close" id="importClose">✕</button>
+            </div>
+            <div class="modal-body" style="padding-bottom:0">
+
+                <!-- Step 1: drop zone -->
+                <div id="importStep1">
+                    <p class="import-hint">Sube un archivo <strong>Excel (.xlsx)</strong> o <strong>CSV (.csv)</strong>.
+                        Las columnas deben tener estos encabezados (en cualquier orden):</p>
+                    <div class="import-cols">
+                        <span>Tipo de Movimiento</span><span>Fecha</span><span>Cliente</span>
+                        <span>Contenedor</span><span>Factura</span><span>Modelo</span>
+                        <span>No lote</span><span>Pallets</span><span>Piezas</span><span>Dañado</span>
+                    </div>
+                    <div class="drop-zone" id="dropZone">
+                        <div class="drop-icon">📂</div>
+                        <p class="drop-text">Arrastra tu archivo aquí</p>
+                        <p class="drop-sub">o haz clic para seleccionar</p>
+                        <input type="file" id="importFile" accept=".xlsx,.xls,.csv" style="display:none" />
+                    </div>
+                    <p class="import-error" id="importError" style="display:none"></p>
+                </div>
+
+                <!-- Step 2: preview -->
+                <div id="importStep2" style="display:none">
+                    <div class="import-preview-header">
+                        <span id="importPreviewInfo">0 filas encontradas</span>
+                        <label class="import-replace-row">
+                            <input type="checkbox" id="importReplace" />
+                            <span>Reemplazar todos los datos existentes</span>
+                        </label>
+                    </div>
+                    <div class="table-scroll import-preview-scroll">
+                        <table class="data-table" id="importPreviewTable">
+                            <thead id="importPreviewHead"></thead>
+                            <tbody id="importPreviewBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" id="importCancel">Cancelar</button>
+                <button class="btn btn-ghost" id="importBack" style="display:none">← Volver</button>
+                <button class="btn btn-primary" id="importConfirm" style="display:none">✔ Importar datos</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- jsPDF for Packing List PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <!-- SheetJS for Excel import -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

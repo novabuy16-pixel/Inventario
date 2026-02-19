@@ -1,0 +1,232 @@
+/* ===========================
+   PACKING LIST VIEW
+=========================== */
+.packing-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.packing-form {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.pk-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+@media (max-width: 1100px) {
+    .pk-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .pk-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.pk-readonly {
+    background: rgba(255, 255, 255, 0.04) !important;
+    color: var(--text-muted) !important;
+    cursor: not-allowed;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+/* Stepper */
+.pk-stepper {
+    display: flex;
+    align-items: center;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.pk-stepper input[type="number"] {
+    flex: 1;
+    border: none;
+    background: transparent;
+    text-align: center;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 4px;
+    -moz-appearance: textfield;
+}
+
+.pk-stepper input[type="number"]::-webkit-outer-spin-button,
+.pk-stepper input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+.stepper-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 500;
+    padding: 0 14px;
+    height: 42px;
+    transition: background 0.15s;
+    line-height: 1;
+}
+
+.stepper-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+/* Preview box */
+.packing-preview-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.packing-preview-header {
+    background: rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+}
+
+.packing-preview-body {
+    padding: 24px;
+}
+
+/* PDF preview card */
+.pdf-preview-card {
+    background: #fff;
+    color: #111;
+    border-radius: 8px;
+    padding: 28px 32px;
+    font-family: 'Inter', Arial, sans-serif;
+    font-size: 11px;
+    max-width: 760px;
+    margin: 0 auto;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+}
+
+.pdf-preview-title {
+    font-size: 18px;
+    font-weight: 800;
+    text-align: center;
+    letter-spacing: 0.12em;
+    margin-bottom: 16px;
+    border-bottom: 2.5px solid #111;
+    padding-bottom: 10px;
+}
+
+.pdf-preview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.pdf-cell {
+    padding: 9px 12px;
+    border: 0.5px solid #ddd;
+    line-height: 1.6;
+}
+
+.pdf-cell-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #666;
+    margin-bottom: 2px;
+    letter-spacing: 0.08em;
+}
+
+.pdf-cell strong {
+    font-weight: 700;
+    color: #111;
+}
+
+.pdf-remarks-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid #ccc;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.pdf-table-wrap table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+}
+
+.pdf-table-wrap th {
+    background: #222;
+    color: #fff;
+    padding: 7px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.06em;
+}
+
+.pdf-table-wrap td {
+    border: 1px solid #ddd;
+    padding: 8px 10px;
+    text-align: center;
+    font-size: 11px;
+}
+
+.pdf-signatures {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.pdf-sig-box {
+    border: 2px solid #f0c040;
+    border-radius: 6px;
+    padding: 28px 12px 10px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: #555;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.pdf-logo-row {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    color: #333;
+    margin: 10px 0 4px;
+}
+
+.pdf-logo-sub {
+    text-align: center;
+    font-size: 9px;
+    color: #888;
+    margin-bottom: 8px;
+}

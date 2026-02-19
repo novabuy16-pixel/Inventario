@@ -1,0 +1,16 @@
+{
+    "name": "inventario-pactra",
+    "version": "1.0.0",
+    "description": "Sistema de Inventario Pactra con SQLite",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "docxtemplater": "^3.68.2",
+        "express": "^4.19.2",
+        "pizzip": "^3.2.0",
+        "puppeteer-core": "^24.37.5",
+        "sql.js": "^1.12.0"
+    }
+}
