@@ -6,6 +6,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const PizZip = require('pizzip');
 const Docxtemplater = require('docxtemplater');
 const puppeteer = require('puppeteer-core');
@@ -284,95 +285,106 @@ app.post('/api/packing-list', (req, res) => {
     }
 });
 
-// POST /api/packing-pdf — genera PDF con Chrome headless a partir del HTML de la plantilla
+// POST /api/packing-pdf — genera PDF con docxtemplater y MS Word (vía PowerShell)
 app.post('/api/packing-pdf', async (req, res) => {
-    if (!CHROME_EXE) {
-        return res.status(500).json({ error: 'No se encontró Chrome o Edge instalado en el sistema.' });
+    const TMPL = path.join(__dirname, 'plantilla_packing.docx');
+
+    if (!fs.existsSync(TMPL)) {
+        return res.status(404).json({
+            error: 'Plantilla no encontrada. Por favor asegúrate de que plantilla_packing.docx esté en la carpeta del proyecto.'
+        });
     }
+
     try {
         const D = req.body;
-        function fmtD(d) {
-            if (!d) return ''; const [y, m, day] = String(d).split('-'); return `${day}/${m}/${y}`;
+
+        // Formatear fecha dd/mm/yyyy
+        function fmtDate(d) {
+            if (!d) return '';
+            const [y, m, day] = String(d).split('-');
+            return `${day}/${m}/${y}`;
         }
-        function e(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
-        const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:Arial,sans-serif;font-size:10pt;color:#000;background:#fff}
-.page{width:100%;padding:12mm 14mm 8mm 14mm}
-h1.title{font-size:16pt;font-weight:700;text-align:center;letter-spacing:.05em;border-bottom:2px solid #000;padding-bottom:5px;margin-bottom:0}
-.ht{width:100%;border-collapse:collapse;border:1px solid #000}
-.ht td{border:1px solid #000;padding:5px 7px;vertical-align:top;font-size:9.5pt}
-.lbl{font-size:7pt;color:#555;display:block;margin-bottom:2px}
-.val{font-size:9.5pt;color:#000}
-.val.b{font-weight:700}
-.cl{width:52%}.cr{width:48%}
-.dt{width:100%;border-collapse:collapse}
-.dt th{border:1px solid #000;padding:5px 4px;text-align:center;font-weight:700;font-size:9.5pt;background:#fff}
-.dt td{border:1px solid #000;padding:6px 4px;text-align:center;font-size:10pt}
-.logo{border:1px solid #000;border-top:none;padding:5px;text-align:center}
-.ln{font-size:14pt;font-weight:700;color:#1a4fb5;letter-spacing:.12em}
-.ls{font-size:7pt;color:#555;margin-top:2px}
-.sf{display:flex;width:100%}
-.sb{flex:1;border:1px solid #000;border-top:none;height:26mm;background:#ffffa0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font-size:8pt;color:#333}
-.sb:not(:last-child){border-right:none}
-@page{size:letter portrait;margin:0}
-</style></head><body><div class="page">
-<h1 class="title">PACKING LIST</h1>
-<table class="ht">
-<tr>
-  <td class="cl"><span class="lbl">1.&nbsp;&nbsp;Shipper/Exporter</span><span class="val b">Pactra Mexico S. de R.L. de C.V.</span><br/><span class="val">Blvd. Rogelio Pérez Arrambide 4502,</span><br/><span class="val">Centro de Pesquería, 66653 Pesquería, N.L.</span></td>
-  <td class="cr"><span class="lbl">6.&nbsp;&nbsp;Invoice no. &amp; date</span><span class="val b">${e(D.invoiceNo)}</span><br/><span class="val">${fmtD(D.invoiceDate)}</span></td>
-</tr>
-<tr>
-  <td class="cl"><span class="lbl">2.&nbsp;&nbsp;For account &amp; risk of Messrs.</span><span class="val b">${e(D.cliente)}</span><br/><span class="val">${e(D.direccion)}</span></td>
-  <td class="cr"><span class="lbl">7.&nbsp;&nbsp;Carrier</span><span class="val"><b>TRUCK:</b> ${e(D.truck)}</span><br/><span class="val"><b>DRIVER:</b> ${e(D.driver)}</span><br/><span class="val"><b>PLATES:</b> ${e(D.plates)}</span></td>
-</tr>
-<tr>
-  <td class="cl"><span class="lbl">3.&nbsp;&nbsp;Notify party</span><span class="val">Same as above</span></td>
-  <td class="cr"><span class="lbl">8.&nbsp;&nbsp;Sailing on or about</span><span class="val">${fmtD(D.invoiceDate)}</span></td>
-</tr>
-<tr>
-  <td class="cl"><span class="lbl">4.&nbsp;&nbsp;Port of loading</span><span class="val b">PESQUERIA NL</span></td>
-  <td class="cr"><span class="lbl">5.&nbsp;&nbsp;Final destination</span><span class="val b">${e(D.ciudad)}</span></td>
-</tr>
-<tr>
-  <td class="cl"><span class="lbl">REMARKS</span><span class="val">${e(D.remarks) || '&nbsp;'}</span></td>
-  <td class="cr"><span class="lbl">CONTAINER</span><span class="val b">${e(D.container)}</span></td>
-</tr>
-</table>
-<table class="dt">
-<thead><tr><th>LOTE</th><th>Pallet</th><th>Saco</th><th>MODELO</th><th>PESO</th><th>Peso bruto</th></tr></thead>
-<tbody><tr><td>${e(D.lote)}</td><td>${D.pallets || 0}</td><td>${D.sacos || 0}</td><td>${e(D.modelo)}</td><td>${D.peso || 0} kg</td><td>${D.pesoBruto || 0} kg</td></tr></tbody>
-</table>
-<div class="logo"><div class="ln">PACTRA</div><div class="ls">Pactra Mexico S. de R.L. de C.V.</div></div>
-<div class="sf">
-  <div class="sb">firma bodega salida</div>
-  <div class="sb">firma operador</div>
-  <div class="sb">firma bodega arribo</div>
-</div>
-</div></body></html>`;
+        const data = {
+            NOMBRECLIENTE: D.cliente || '',
+            Direccion: D.direccion || '',
+            Ciudad: D.ciudad || '',
+            InvoiceNo: D.invoiceNo || '',
+            InvoiceDate: fmtDate(D.invoiceDate),
+            Truck: D.truck || '',
+            Driver: D.driver || '',
+            Plates: D.plates || '',
+            Container: D.container || '',
+            Lote: D.lote || '',
+            Pallet: String(D.pallets || 0),
+            Saco: String(D.sacos || 0),
+            Modelo: D.modelo || '',
+            Peso: String(D.peso || 0),
+            PesoBruto: String(D.pesoBruto || 0),
+            Remarks: D.remarks || '',
+        };
 
-        const browser = await puppeteer.launch({
-            executablePath: CHROME_EXE,
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
+        const content = fs.readFileSync(TMPL, 'binary');
+        const zip = new PizZip(content);
+        const doc = new Docxtemplater(zip, {
+            delimiters: { start: '<<', end: '>>' },
+            paragraphLoop: true,
+            linebreaks: true,
+            nullGetter: () => '',   // campo vacío si no existe
         });
-        const page = await browser.newPage();
-        await page.setContent(html, { waitUntil: 'domcontentloaded' });
-        const pdfBuf = await page.pdf({
-            format: 'Letter',
-            printBackground: true,
-            margin: { top: '0', right: '0', bottom: '0', left: '0' },
-        });
-        await browser.close();
 
-        const fname = `PackingList_${(D.invoiceNo || 'SN').replace(/[^\w-]/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="${fname}"`);
-        res.setHeader('Content-Length', pdfBuf.length);
-        res.send(pdfBuf);
+        doc.render(data);
+
+        const buf = doc.getZip().generate({ type: 'nodebuffer', compression: 'DEFLATE' });
+
+        // Guardar docx a nivel temporal
+        const ts = Date.now();
+        const tmpDocx = path.join(__dirname, `temp_pack_${ts}.docx`);
+        const tmpPdf = path.join(__dirname, `temp_pack_${ts}.pdf`);
+
+        fs.writeFileSync(tmpDocx, buf);
+
+        const { exec } = require('child_process');
+
+        // Determinar el comando dependiendo del OS
+        let cmd = '';
+        if (os.platform() === 'win32') {
+            // En Windows local: Usar Microsoft Word mediante PowerShell
+            const psScript = path.join(__dirname, 'docx_to_pdf.ps1');
+            cmd = `powershell -ExecutionPolicy Bypass -File "${psScript}" -DocPath "${tmpDocx}" -PdfPath "${tmpPdf}"`;
+        } else {
+            // En la Nube (Linux) / macOS: Usar LibreOffice headless
+            cmd = `libreoffice --headless --convert-to pdf "${tmpDocx}" --outdir "${__dirname}"`;
+        }
+
+        exec(cmd, (error, stdout, stderr) => {
+            if (error) {
+                console.error('Error al convertir PDF:', error, stderr);
+                if (fs.existsSync(tmpDocx)) fs.unlinkSync(tmpDocx);
+                if (fs.existsSync(tmpPdf)) fs.unlinkSync(tmpPdf);
+                return res.status(500).json({ error: 'Hubo un error convirtiendo a PDF. Si estás en la nube (Linux), asegúrate de que "libreoffice" está instalado.' });
+            }
+
+            // Si llegamos aquí, el PDF existe
+            if (fs.existsSync(tmpPdf)) {
+                const pdfBuf = fs.readFileSync(tmpPdf);
+                const fname = `PackingList_${(D.invoiceNo || 'SN').replace(/[^\w-]/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+
+                res.setHeader('Content-Type', 'application/pdf');
+                res.setHeader('Content-Disposition', `attachment; filename="${fname}"`);
+                res.setHeader('Content-Length', pdfBuf.length);
+                res.send(pdfBuf);
+
+                // Limpiar temporales
+                try {
+                    fs.unlinkSync(tmpDocx);
+                    fs.unlinkSync(tmpPdf);
+                } catch (e) { /* ignore */ }
+            } else {
+                if (fs.existsSync(tmpDocx)) fs.unlinkSync(tmpDocx);
+                res.status(500).json({ error: 'El archivo PDF no se generó correctamente.' });
+            }
+        });
 
     } catch (e) {
         console.error('Error generando PDF:', e);
