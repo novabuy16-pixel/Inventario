@@ -1038,6 +1038,19 @@ pkModelo.addEventListener('change', async () => {
   renderPackingPreview();
 });
 
+// ── Event: container change → autofill invoice & lote ─
+pkContainer.addEventListener('change', () => {
+  if (pkContainer.value) {
+    // Buscar en los registros el último movimiento con este contenedor
+    const record = records.slice().reverse().find(r => r.contenedor === pkContainer.value);
+    if (record) {
+      if (record.factura) pkInvoiceNo.value = record.factura;
+      if (record.no_lote) pkLote.value = record.no_lote;
+    }
+  }
+  renderPackingPreview();
+});
+
 // ── Live preview update ───────────────────────
 ['pk_cliente', 'pk_container', 'pk_invoice_no', 'pk_invoice_date', 'pk_lote', 'pk_pallets',
   'pk_sacos', 'pk_peso', 'pk_peso_bruto', 'pk_truck', 'pk_driver', 'pk_plates',
