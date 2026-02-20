@@ -932,6 +932,7 @@ init();
 
 // ── DOM refs ─────────────────────────────────
 const pkForm = document.getElementById('packingForm');
+const pkCliente = document.getElementById('pk_cliente');
 const pkModelo = document.getElementById('pk_modelo');
 const pkContainer = document.getElementById('pk_container');
 const pkInvoiceNo = document.getElementById('pk_invoice_no');
@@ -951,12 +952,33 @@ const pkPreviewBody = document.getElementById('packingPreviewBody');
 const btnGenerarPDF = document.getElementById('btnGenerarPDF');
 const btnResetPacking = document.getElementById('btnResetPacking');
 
+// ── Cliente Config ───────────────────────────
+const CLIENT_CONFIG = {
+  DONGJIN: {
+    nombre: 'DONGJIN TECHWIN S.A DE C.V',
+    direccion: 'Parque Industrial Jesus Maria\nPesquería, 66616, N.L\nDaniel 8110172194',
+    ciudad: 'PESQUERIA NL'
+  },
+  TAESUNG: {
+    nombre: 'TAESUNG PRECISION CO. LTRD',
+    direccion: 'Av. Parque Industrial Monterrey #600\nCol. Parque Industrial Monterrey\nApodaca, N.L. CP 66603',
+    ciudad: 'APODACA NL'
+  }
+};
+
 // ── Stepper helper (global for onclick) ──────
 function pkStep(id, delta) {
   const el = document.getElementById(id);
   const v = parseFloat(el.value) || 0;
   const step = parseFloat(el.step) || 1;
   el.value = Math.max(0, +(v + delta * step).toFixed(2));
+
+  if (id === 'pk_sacos' || id === 'pk_peso') {
+    const sacos = parseInt(pkSacos.value) || 0;
+    const peso = parseFloat(pkPeso.value) || 0;
+    pkPesoBruto.value = (sacos * peso).toFixed(2);
+  }
+
   renderPackingPreview();
 }
 
@@ -997,6 +1019,19 @@ async function loadPackingContainers(modelo) {
   }
 }
 
+// ── Event: cliente change → autofill fields ──
+pkCliente.addEventListener('change', () => {
+  const c = CLIENT_CONFIG[pkCliente.value];
+  if (c) {
+    pkDireccion.value = c.direccion;
+    pkCiudad.value = c.ciudad;
+  } else {
+    pkDireccion.value = '';
+    pkCiudad.value = '';
+  }
+  renderPackingPreview();
+});
+
 // ── Event: modelo change → reload containers ─
 pkModelo.addEventListener('change', async () => {
   await loadPackingContainers(pkModelo.value);
@@ -1004,13 +1039,22 @@ pkModelo.addEventListener('change', async () => {
 });
 
 // ── Live preview update ───────────────────────
-['pk_container', 'pk_invoice_no', 'pk_invoice_date', 'pk_lote', 'pk_pallets',
+['pk_cliente', 'pk_container', 'pk_invoice_no', 'pk_invoice_date', 'pk_lote', 'pk_pallets',
   'pk_sacos', 'pk_peso', 'pk_peso_bruto', 'pk_truck', 'pk_driver', 'pk_plates',
   'pk_ciudad', 'pk_direccion', 'pk_remarks'
 ].forEach(id => {
   const el = document.getElementById(id);
-  if (el) el.addEventListener('input', renderPackingPreview);
-  if (el) el.addEventListener('change', renderPackingPreview);
+  if (el) {
+    el.addEventListener('input', () => {
+      if (id === 'pk_sacos' || id === 'pk_peso') {
+        const sacos = parseInt(pkSacos.value) || 0;
+        const peso = parseFloat(pkPeso.value) || 0;
+        pkPesoBruto.value = (sacos * peso).toFixed(2);
+      }
+      renderPackingPreview();
+    });
+    el.addEventListener('change', renderPackingPreview);
+  }
 });
 
 function fmtPkDate(d) {
@@ -1117,8 +1161,11 @@ function renderPackingPreview() {
 
 // ── Get form data ────────────────────────────
 function getPKData() {
+  const c = CLIENT_CONFIG[pkCliente.value];
+  const nombreC = c ? c.nombre : pkCliente.value;
+
   return {
-    cliente: 'DAEWON',
+    cliente: nombreC,
     modelo: pkModelo.value,
     invoiceNo: pkInvoiceNo.value.trim(),
     invoiceDate: pkInvoiceDate.value,

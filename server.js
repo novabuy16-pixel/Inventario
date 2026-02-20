@@ -308,6 +308,7 @@ app.post('/api/packing-pdf', async (req, res) => {
         const data = {
             NOMBRECLIENTE: D.cliente || '',
             Direccion: D.direccion || '',
+            'Ciudad ': D.ciudad || '',
             Ciudad: D.ciudad || '',
             InvoiceNo: D.invoiceNo || '',
             InvoiceDate: fmtDate(D.invoiceDate),
@@ -316,8 +317,8 @@ app.post('/api/packing-pdf', async (req, res) => {
             Plates: D.plates || '',
             Container: D.container || '',
             Lote: D.lote || '',
-            Pallet: String(D.pallets || 0),
-            Saco: String(D.sacos || 0),
+            Pallets: String(D.pallets || 0),
+            Sacos: String(D.sacos || 0),
             Modelo: D.modelo || '',
             Peso: String(D.peso || 0),
             PesoBruto: String(D.pesoBruto || 0),
