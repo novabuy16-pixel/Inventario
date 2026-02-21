@@ -40,9 +40,9 @@
                 <span class="nav-label">Dañados</span>
                 <span class="badge" id="badge-danos">0</span>
             </a>
-            <a href="#" class="nav-item" data-view="por-modelo" id="nav-por-modelo">
-                <span class="nav-icon">🔩</span>
-                <span class="nav-label">Por Modelo</span>
+            <a href="#" class="nav-item" data-view="por-cliente" id="nav-por-cliente">
+                <span class="nav-icon">🏢</span>
+                <span class="nav-label">Por Cliente / Modelo</span>
             </a>
             <a href="#" class="nav-item" data-view="packing" id="nav-packing">
                 <span class="nav-icon">📄</span>
@@ -243,30 +243,33 @@
                 </div>
             </section>
 
-            <!-- ===== POR MODELO VIEW ===== -->
-            <section class="view" id="view-por-modelo">
+            <!-- ===== POR CLIENTE VIEW ===== -->
+            <section class="view" id="view-por-cliente">
 
-                <!-- Toolbar modelo -->
-                <div class="toolbar">
+                <!-- Toolbar cliente -->
+                <div class="toolbar" id="toolbar-cliente">
                     <div class="search-box">
                         <span class="search-icon">🔍</span>
-                        <input type="text" id="modeloSearch" placeholder="Buscar modelo..." />
+                        <input type="text" id="clienteSearch" placeholder="Buscar cliente..." />
                     </div>
                     <div class="filter-group">
-                        <select id="modeloSort" title="Ordenar por">
-                            <option value="modelo">Ordenar: Modelo A–Z</option>
+                        <select id="clienteSort" title="Ordenar por">
+                            <option value="nombre">Ordenar: A–Z</option>
                             <option value="piezas_desc">Ordenar: Más piezas</option>
                             <option value="movimientos_desc">Ordenar: Más movimientos</option>
                             <option value="danos_desc">Ordenar: Más dañados</option>
                         </select>
                     </div>
-                    <button class="btn btn-secondary" id="btnExportModelo" title="Exportar resumen por modelo">
-                        ⬇ Exportar CSV
-                    </button>
                 </div>
 
-                <!-- Cards de modelo -->
-                <div class="modelo-grid" id="modeloGrid"></div>
+                <!-- Breadcrumb para regresar de Modelo a Cliente -->
+                <div id="breadcrumbCliente" style="display:none; margin-bottom: 12px; align-items: center; gap: 10px;">
+                    <button class="btn btn-secondary btn-sm" id="btnVolverClientes">← Volver a Clientes</button>
+                    <strong id="lblClienteSeleccionado" style="font-size:16px;"></strong>
+                </div>
+
+                <!-- Cards de cliente o modelo -->
+                <div class="modelo-grid" id="clienteGrid"></div>
 
                 <!-- Detalle de movimientos del modelo seleccionado -->
                 <div class="modelo-detalle" id="modeloDetalle" style="display:none">
@@ -302,7 +305,7 @@
                 </div>
 
                 <div class="table-footer" style="margin-top:12px">
-                    <span id="modeloCount">0 modelos</span>
+                    <span id="clienteCount">0 clientes</span>
                 </div>
             </section>
 

@@ -142,7 +142,7 @@ const views = {
   dashboard: { el: document.getElementById('view-dashboard'), title: 'Dashboard', navId: 'nav-dashboard' },
   movimientos: { el: document.getElementById('view-movimientos'), title: 'Movimientos', navId: 'nav-movimientos' },
   'dañados': { el: document.getElementById('view-dañados'), title: 'Artículos Dañados', navId: 'nav-dañados' },
-  'por-modelo': { el: document.getElementById('view-por-modelo'), title: 'Inventario por Modelo', navId: 'nav-por-modelo' },
+  'por-cliente': { el: document.getElementById('view-por-cliente'), title: 'Inventario por Cliente', navId: 'nav-por-cliente' },
   'packing': { el: document.getElementById('view-packing'), title: 'Packing List', navId: 'nav-packing' },
 };
 
@@ -155,7 +155,7 @@ function showView(name) {
   if (name === 'dashboard') renderDashboard();
   if (name === 'movimientos') renderTable();
   if (name === 'dañados') renderDanos();
-  if (name === 'por-modelo') renderModelos();
+  if (name === 'por-cliente') renderClientes();
   if (name === 'packing') initPackingView();
 }
 
@@ -763,33 +763,37 @@ importConfirm.addEventListener('click', async () => {
 });
 
 // ──────────────────────────────────────────────
-// POR MODELO VIEW
+// POR CLIENTE VIEW
 // ──────────────────────────────────────────────
+let clienteActivo = null;
 let modeloActivo = null;
 
-const modeloGrid = document.getElementById('modeloGrid');
-const modeloCount = document.getElementById('modeloCount');
-const modeloSearch = document.getElementById('modeloSearch');
-const modeloSort = document.getElementById('modeloSort');
-const modeloDetalle = document.getElementById('modeloDetalle');
-const modeloDetalleTitulo = document.getElementById('modeloDetalleTitulo');
-const modeloDetalleTbody = document.getElementById('modeloDetalleTbody');
-const modeloDetalleCount = document.getElementById('modeloDetalleCount');
-const btnCerrarDetalle = document.getElementById('btnCerrarDetalle');
-const btnExportModelo = document.getElementById('btnExportModelo');
-
-function groupByModelo() {
+function groupByClienteLevel() {
   const map = {};
   records.forEach(r => {
-    const key = (r.modelo || '(Sin modelo)').trim();
-    if (!map[key]) map[key] = { nombre: key, movimientos: 0, pallets: 0, piezas: 0, danos: 0, tipos: {}, registros: [] };
-    map[key].movimientos++;
-    map[key].pallets += parseInt(r.pallets) || 0;
-    map[key].piezas += parseInt(r.piezas) || 0;
-    if (isDanado(r)) map[key].danos++;
-    const t = r.tipo_movimiento || 'Otro';
-    map[key].tipos[t] = (map[key].tipos[t] || 0) + 1;
-    map[key].registros.push(r);
+    if (clienteActivo) {
+      const c = (r.cliente || '(Sin cliente)').trim();
+      if (c !== clienteActivo) return;
+      const key = (r.modelo || '(Sin modelo)').trim();
+      if (!map[key]) map[key] = { nombre: key, movimientos: 0, pallets: 0, piezas: 0, danos: 0, tipos: {}, registros: [] };
+      map[key].movimientos++;
+      map[key].pallets += parseInt(r.pallets) || 0;
+      map[key].piezas += parseInt(r.piezas) || 0;
+      if (isDanado(r)) map[key].danos++;
+      const t = r.tipo_movimiento || 'Otro';
+      map[key].tipos[t] = (map[key].tipos[t] || 0) + 1;
+      map[key].registros.push(r);
+    } else {
+      const key = (r.cliente || '(Sin cliente)').trim();
+      if (!map[key]) map[key] = { nombre: key, movimientos: 0, pallets: 0, piezas: 0, danos: 0, tipos: {}, registros: [] };
+      map[key].movimientos++;
+      map[key].pallets += parseInt(r.pallets) || 0;
+      map[key].piezas += parseInt(r.piezas) || 0;
+      if (isDanado(r)) map[key].danos++;
+      const t = r.tipo_movimiento || 'Otro';
+      map[key].tipos[t] = (map[key].tipos[t] || 0) + 1;
+      map[key].registros.push(r);
+    }
   });
   return Object.values(map);
 }
@@ -798,32 +802,56 @@ function tipoPillClass(tipo) {
   return { Entrada: 'pill-entrada', Salida: 'pill-salida', Transferencia: 'pill-transfer', 'Devolución': 'pill-dev', Ajuste: 'pill-ajuste' }[tipo] || '';
 }
 
-function renderModelos() {
-  const q = (modeloSearch?.value || '').toLowerCase().trim();
-  const sort = modeloSort?.value || 'modelo';
-  let grupos = groupByModelo().filter(g => !q || g.nombre.toLowerCase().includes(q));
-  if (sort === 'modelo') grupos.sort((a, b) => a.nombre.localeCompare(b.nombre));
+function renderClientes() {
+  const clienteSearch = document.getElementById('clienteSearch');
+  const clienteSort = document.getElementById('clienteSort');
+  const clienteGrid = document.getElementById('clienteGrid');
+  const clienteCount = document.getElementById('clienteCount');
+  const breadcrumbCliente = document.getElementById('breadcrumbCliente');
+  const lblClienteSeleccionado = document.getElementById('lblClienteSeleccionado');
+  const modeloDetalle = document.getElementById('modeloDetalle');
+
+  const q = (clienteSearch?.value || '').toLowerCase().trim();
+  const sort = clienteSort?.value || 'nombre';
+
+  let grupos = groupByClienteLevel().filter(g => !q || g.nombre.toLowerCase().includes(q));
+
+  if (sort === 'nombre') grupos.sort((a, b) => a.nombre.localeCompare(b.nombre));
   if (sort === 'piezas_desc') grupos.sort((a, b) => b.piezas - a.piezas);
   if (sort === 'movimientos_desc') grupos.sort((a, b) => b.movimientos - a.movimientos);
   if (sort === 'danos_desc') grupos.sort((a, b) => b.danos - a.danos);
 
-  modeloCount.textContent = `${grupos.length} modelo${grupos.length !== 1 ? 's' : ''}`;
+  if (clienteActivo) {
+    if (clienteCount) clienteCount.textContent = `${grupos.length} modelo${grupos.length !== 1 ? 's' : ''}`;
+    if (breadcrumbCliente) breadcrumbCliente.style.display = 'flex';
+    if (lblClienteSeleccionado) lblClienteSeleccionado.textContent = clienteActivo;
+  } else {
+    if (clienteCount) clienteCount.textContent = `${grupos.length} cliente${grupos.length !== 1 ? 's' : ''}`;
+    if (breadcrumbCliente) breadcrumbCliente.style.display = 'none';
+  }
 
   if (!grupos.length) {
-    modeloGrid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔍</div><p>No se encontraron modelos</p></div>`;
+    if (clienteGrid) clienteGrid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔍</div><p>No se encontraron ${clienteActivo ? 'modelos' : 'clientes'}</p></div>`;
+    if (modeloDetalle) modeloDetalle.style.display = 'none';
     return;
   }
 
-  modeloGrid.innerHTML = grupos.map(g => {
+  if (clienteGrid) clienteGrid.innerHTML = grupos.map(g => {
     const pillsHtml = Object.entries(g.tipos)
       .map(([t, cnt]) => `<span class="modelo-pill ${tipoPillClass(t)}">${t} · ${cnt}</span>`).join('');
     const danoHtml = g.danos > 0
       ? `<span class="modelo-dano-tag">⚠ ${g.danos} dañado${g.danos > 1 ? 's' : ''}</span>`
       : `<span style="color:var(--text-muted);font-size:11px">✔ Sin daños</span>`;
+
+    const isSelected = (clienteActivo && modeloActivo === g.nombre) ? 'selected' : '';
+    const clickAction = clienteActivo
+      ? `verDetalleModelo('${encodeURIComponent(g.nombre)}')`
+      : `verModelosDeCliente('${encodeURIComponent(g.nombre)}')`;
+
     return `
-      <div class="modelo-card ${g.danos > 0 ? 'has-danos' : ''} ${modeloActivo === g.nombre ? 'selected' : ''}"
-           onclick="verDetalleModelo('${encodeURIComponent(g.nombre)}')"
-           title="Ver movimientos de: ${g.nombre}">
+      <div class="modelo-card ${g.danos > 0 ? 'has-danos' : ''} ${isSelected}"
+           onclick="${clickAction}"
+           title="Presione para ver detalles: ${g.nombre}">
         <div class="modelo-card-header">
           <span class="modelo-card-name">${g.nombre}</span>
           <span class="modelo-card-id">${g.movimientos} mov.</span>
@@ -843,32 +871,53 @@ function renderModelos() {
       </div>`;
   }).join('');
 
-  if (modeloActivo) {
+  if (clienteActivo && modeloActivo) {
     const g = grupos.find(x => x.nombre === modeloActivo);
     if (g) renderModeloDetalle(g);
-    else { modeloDetalle.style.display = 'none'; modeloActivo = null; }
+    else { if (modeloDetalle) modeloDetalle.style.display = 'none'; modeloActivo = null; }
+  } else {
+    if (modeloDetalle) modeloDetalle.style.display = 'none';
   }
 }
+
+function verModelosDeCliente(encodedNombre) {
+  clienteActivo = decodeURIComponent(encodedNombre);
+  modeloActivo = null;
+  const searchEl = document.getElementById('clienteSearch');
+  if (searchEl) searchEl.value = '';
+  renderClientes();
+}
+
+window.verModelosDeCliente = verModelosDeCliente;
 
 function verDetalleModelo(encodedNombre) {
   const nombre = decodeURIComponent(encodedNombre);
   modeloActivo = nombre;
-  const g = groupByModelo().find(x => x.nombre === nombre);
+  const g = groupByClienteLevel().find(x => x.nombre === nombre);
   if (!g) return;
   renderModeloDetalle(g);
-  setTimeout(() => modeloDetalle.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
-  renderModelos();
+  setTimeout(() => document.getElementById('modeloDetalle')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+  renderClientes();
 }
 
+// Para usar por el grid onClick se requiere poder llamar a esta
+window.verDetalleModelo = verDetalleModelo;
+
 function renderModeloDetalle(g) {
-  modeloDetalleTitulo.textContent = `Movimientos: ${g.nombre}`;
-  modeloDetalleCount.textContent = `${g.registros.length} registro${g.registros.length !== 1 ? 's' : ''}`;
-  modeloDetalle.style.display = 'block';
+  const modeloDetalleTitulo = document.getElementById('modeloDetalleTitulo');
+  const modeloDetalleCount = document.getElementById('modeloDetalleCount');
+  const modeloDetalleTbody = document.getElementById('modeloDetalleTbody');
+
+  if (modeloDetalleTitulo) modeloDetalleTitulo.textContent = `Movimientos del Modelo: ${g.nombre}`;
+  if (modeloDetalleCount) modeloDetalleCount.textContent = `${g.registros.length} registro${g.registros.length !== 1 ? 's' : ''}`;
+  const modeloDetalle = document.getElementById('modeloDetalle');
+  if (modeloDetalle) modeloDetalle.style.display = 'block';
+
   const sorted = [...g.registros].sort((a, b) => {
     if (b.fecha > a.fecha) return 1; if (b.fecha < a.fecha) return -1;
     return b.id_movimiento - a.id_movimiento;
   });
-  modeloDetalleTbody.innerHTML = sorted.map(r => `
+  if (modeloDetalleTbody) modeloDetalleTbody.innerHTML = sorted.map(r => `
     <tr>
       <td><strong>#${r.id_movimiento}</strong></td>
       <td>${tipoChip(r.tipo_movimiento)}</td>
@@ -889,29 +938,68 @@ function renderModeloDetalle(g) {
     </tr>`).join('');
 }
 
-btnCerrarDetalle?.addEventListener('click', () => {
-  modeloDetalle.style.display = 'none';
-  modeloActivo = null;
-  renderModelos();
-});
-if (modeloSearch) modeloSearch.addEventListener('input', () => { modeloActivo = null; modeloDetalle.style.display = 'none'; renderModelos(); });
-if (modeloSort) modeloSort.addEventListener('change', () => renderModelos());
+// Inicialización de eventos para Cliente View
+document.addEventListener('DOMContentLoaded', () => {
+  const btnVolverClientes = document.getElementById('btnVolverClientes');
+  if (btnVolverClientes) {
+    btnVolverClientes.addEventListener('click', () => {
+      clienteActivo = null;
+      modeloActivo = null;
+      const searchEl = document.getElementById('clienteSearch');
+      if (searchEl) searchEl.value = '';
+      renderClientes();
+    });
+  }
 
-btnExportModelo?.addEventListener('click', () => {
-  const grupos = groupByModelo();
-  const headers = ['Modelo', 'Total Movimientos', 'Total Piezas', 'Total Pallets', 'Con Daños', 'Entradas', 'Salidas', 'Transferencias', 'Devoluciones', 'Ajustes'];
-  const rows = grupos.map(g => [
-    `"${g.nombre}"`, g.movimientos, g.piezas, g.pallets, g.danos,
-    g.tipos['Entrada'] || 0, g.tipos['Salida'] || 0, g.tipos['Transferencia'] || 0,
-    g.tipos['Devolución'] || 0, g.tipos['Ajuste'] || 0,
-  ].join(','));
-  const csv = [headers.join(','), ...rows].join('\n');
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `pactra_por_modelo_${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click(); URL.revokeObjectURL(url);
-  showToast('Resumen por modelo exportado', 'success');
+  const btnCerrarDetalle = document.getElementById('btnCerrarDetalle');
+  if (btnCerrarDetalle) {
+    btnCerrarDetalle.addEventListener('click', () => {
+      const md = document.getElementById('modeloDetalle');
+      if (md) md.style.display = 'none';
+      modeloActivo = null;
+      renderClientes();
+    });
+  }
+
+  const clienteSearch = document.getElementById('clienteSearch');
+  if (clienteSearch) {
+    clienteSearch.addEventListener('input', () => {
+      modeloActivo = null;
+      const md = document.getElementById('modeloDetalle');
+      if (md) md.style.display = 'none';
+      renderClientes();
+    });
+  }
+
+  const clienteSort = document.getElementById('clienteSort');
+  if (clienteSort) {
+    clienteSort.addEventListener('change', () => renderClientes());
+  }
+
+  const btnExportCliente = document.getElementById('btnExportCliente');
+  if (btnExportCliente) {
+    btnExportCliente.addEventListener('click', () => {
+      const grupos = groupByClienteLevel();
+      const headers = [
+        clienteActivo ? 'Modelo' : 'Cliente',
+        'Total Movimientos', 'Total Piezas', 'Total Pallets', 'Con Daños', 'Entradas', 'Salidas', 'Transferencias', 'Devoluciones', 'Ajustes'
+      ];
+      const rows = grupos.map(g => [
+        `"${g.nombre}"`, g.movimientos, g.piezas, g.pallets, g.danos,
+        g.tipos['Entrada'] || 0, g.tipos['Salida'] || 0, g.tipos['Transferencia'] || 0,
+        g.tipos['Devolución'] || 0, g.tipos['Ajuste'] || 0,
+      ].join(','));
+      const csv = [headers.join(','), ...rows].join('\n');
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `resumen_${clienteActivo ? 'modelos_' + clienteActivo : 'clientes'}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
+  }
 });
 
 // ──────────────────────────────────────────────
