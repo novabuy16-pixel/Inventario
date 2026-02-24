@@ -12,9 +12,10 @@ window.fetch = async (...args) => {
   const token = localStorage.getItem('token');
 
   // Handle mobile app environment vs web
-  const baseUrl = window.location.protocol.includes('http')
-    ? ''
-    : 'https://inventario-1-83xv.onrender.com';
+  const isCapacitor = !!window.Capacitor?.isNativePlatform?.();
+  const baseUrl = isCapacitor
+    ? 'https://inventario-1-83xv.onrender.com'
+    : '';
 
   if (typeof resource === 'string' && resource.startsWith('/api')) {
     resource = baseUrl + resource;
