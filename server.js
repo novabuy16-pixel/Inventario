@@ -195,6 +195,14 @@ app.get('/api/modelos', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// GET /api/clientes — clientes únicos del inventario
+app.get('/api/clientes', async (req, res) => {
+    try {
+        const { rows } = await pool.query("SELECT DISTINCT cliente FROM movimientos WHERE cliente != '' ORDER BY cliente ASC");
+        res.json(rows.map(r => r.cliente));
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // GET /api/contenedores?modelo=xxx  — versión con query param (maneja chars especiales)
 app.get('/api/contenedores', async (req, res) => {
     try {

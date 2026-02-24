@@ -72,9 +72,29 @@ let records = [];
 async function reloadRecords() {
   try {
     records = await API.getAll();
+    await updateDatalists();
   } catch (e) {
     console.error('Error cargando datos:', e);
     showToast('Error al conectar con el servidor', 'error');
+  }
+}
+
+async function updateDatalists() {
+  try {
+    const clientes = await fetch('/api/clientes').then(r => r.json());
+    const modelos = await fetch('/api/modelos').then(r => r.json());
+
+    const clList = document.getElementById('clientes-list');
+    if (clList && Array.isArray(clientes)) {
+      clList.innerHTML = clientes.map(c => `<option value="${c}">`).join('');
+    }
+
+    const mdList = document.getElementById('modelos-list');
+    if (mdList && Array.isArray(modelos)) {
+      mdList.innerHTML = modelos.map(m => `<option value="${m}">`).join('');
+    }
+  } catch (err) {
+    console.error('Error cargando listas de sugerencia:', err);
   }
 }
 
