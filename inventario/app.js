@@ -212,8 +212,14 @@ function renderDashboard() {
   const entradas = records.filter(r => r.tipo_movimiento === 'Entrada').length;
   const salidas = records.filter(r => r.tipo_movimiento === 'Salida').length;
   const danos = records.filter(r => isDanado(r)).length;
-  const pallets = records.reduce((s, r) => s + (parseInt(r.pallets) || 0), 0);
-  const piezas = records.reduce((s, r) => s + (parseInt(r.piezas) || 0), 0);
+  const pallets = records.reduce((s, r) => {
+    const factor = (r.tipo_movimiento || '').toLowerCase().includes('salida') ? -1 : 1;
+    return s + (parseInt(r.pallets) || 0) * factor;
+  }, 0);
+  const piezas = records.reduce((s, r) => {
+    const factor = (r.tipo_movimiento || '').toLowerCase().includes('salida') ? -1 : 1;
+    return s + (parseInt(r.piezas) || 0) * factor;
+  }, 0);
 
   statTotal.textContent = total.toLocaleString();
   statEntradas.textContent = entradas.toLocaleString();
@@ -777,8 +783,9 @@ function groupByClienteLevel() {
       const key = (r.modelo || '(Sin modelo)').trim();
       if (!map[key]) map[key] = { nombre: key, movimientos: 0, pallets: 0, piezas: 0, danos: 0, tipos: {}, registros: [] };
       map[key].movimientos++;
-      map[key].pallets += parseInt(r.pallets) || 0;
-      map[key].piezas += parseInt(r.piezas) || 0;
+      const factor = (r.tipo_movimiento || '').toLowerCase().includes('salida') ? -1 : 1;
+      map[key].pallets += (parseInt(r.pallets) || 0) * factor;
+      map[key].piezas += (parseInt(r.piezas) || 0) * factor;
       if (isDanado(r)) map[key].danos++;
       const t = r.tipo_movimiento || 'Otro';
       map[key].tipos[t] = (map[key].tipos[t] || 0) + 1;
@@ -787,8 +794,9 @@ function groupByClienteLevel() {
       const key = (r.cliente || '(Sin cliente)').trim();
       if (!map[key]) map[key] = { nombre: key, movimientos: 0, pallets: 0, piezas: 0, danos: 0, tipos: {}, registros: [] };
       map[key].movimientos++;
-      map[key].pallets += parseInt(r.pallets) || 0;
-      map[key].piezas += parseInt(r.piezas) || 0;
+      const factor = (r.tipo_movimiento || '').toLowerCase().includes('salida') ? -1 : 1;
+      map[key].pallets += (parseInt(r.pallets) || 0) * factor;
+      map[key].piezas += (parseInt(r.piezas) || 0) * factor;
       if (isDanado(r)) map[key].danos++;
       const t = r.tipo_movimiento || 'Otro';
       map[key].tipos[t] = (map[key].tipos[t] || 0) + 1;
