@@ -1,0 +1,281 @@
+{
+  "api": {
+    "name": "SafeAreaPlugin",
+    "slug": "safeareaplugin",
+    "docs": "",
+    "tags": [],
+    "methods": [
+      {
+        "name": "getSafeAreaInsets",
+        "signature": "() => Promise<SafeAreaInsets>",
+        "parameters": [],
+        "returns": "Promise<SafeAreaInsets>",
+        "tags": [],
+        "docs": "Get mobile SafeArea info",
+        "complexTypes": [
+          "SafeAreaInsets"
+        ],
+        "slug": "getsafeareainsets"
+      },
+      {
+        "name": "getStatusBarHeight",
+        "signature": "() => Promise<StatusBarInfo>",
+        "parameters": [],
+        "returns": "Promise<StatusBarInfo>",
+        "tags": [],
+        "docs": "Get mobile statusbar height",
+        "complexTypes": [
+          "StatusBarInfo"
+        ],
+        "slug": "getstatusbarheight"
+      },
+      {
+        "name": "setImmersiveNavigationBar",
+        "signature": "(options?: Pick<NavigationBarOptions, \"statusBarStyle\"> | undefined) => Promise<void>",
+        "parameters": [
+          {
+            "name": "options",
+            "docs": "",
+            "type": "Pick<NavigationBarOptions, 'statusBarStyle'> | undefined"
+          }
+        ],
+        "returns": "Promise<void>",
+        "tags": [
+          {
+            "name": "param",
+            "text": "options.statusBarStyle - statusbar style"
+          }
+        ],
+        "docs": "Set navigation bar immersive on Android , statusbar background is always set to transparent, not implemented on IOS",
+        "complexTypes": [
+          "Pick",
+          "NavigationBarOptions"
+        ],
+        "slug": "setimmersivenavigationbar"
+      },
+      {
+        "name": "unsetImmersiveNavigationBar",
+        "signature": "(options?: NavigationBarOptions | undefined) => Promise<void>",
+        "parameters": [
+          {
+            "name": "options",
+            "docs": "",
+            "type": "NavigationBarOptions | undefined"
+          }
+        ],
+        "returns": "Promise<void>",
+        "tags": [
+          {
+            "name": "param",
+            "text": "options.statusBarBg - statusbar background color, default is transparent"
+          },
+          {
+            "name": "param",
+            "text": "options.statusBarStyle - statusbar style"
+          }
+        ],
+        "docs": "unset navigation bar immersive on Android , not implemented on IOS",
+        "complexTypes": [
+          "NavigationBarOptions"
+        ],
+        "slug": "unsetimmersivenavigationbar"
+      },
+      {
+        "name": "addListener",
+        "signature": "(event: 'safeAreaChanged', listenerFunc: (data: SafeAreaInsets) => void) => Promise<PluginListenerHandle>",
+        "parameters": [
+          {
+            "name": "event",
+            "docs": "",
+            "type": "'safeAreaChanged'"
+          },
+          {
+            "name": "listenerFunc",
+            "docs": "",
+            "type": "(data: SafeAreaInsets) => void"
+          }
+        ],
+        "returns": "Promise<PluginListenerHandle>",
+        "tags": [
+          {
+            "name": "param",
+            "text": "event"
+          },
+          {
+            "name": "param",
+            "text": "listenerFunc"
+          }
+        ],
+        "docs": "Event listener when safe-area changed",
+        "complexTypes": [
+          "PluginListenerHandle",
+          "SafeAreaInsets"
+        ],
+        "slug": "addlistenersafeareachanged-"
+      },
+      {
+        "name": "removeAllListeners",
+        "signature": "() => Promise<void>",
+        "parameters": [],
+        "returns": "Promise<void>",
+        "tags": [],
+        "docs": "Remove all native listeners for this plugin",
+        "complexTypes": [],
+        "slug": "removealllisteners"
+      }
+    ],
+    "properties": []
+  },
+  "interfaces": [
+    {
+      "name": "SafeAreaInsets",
+      "slug": "safeareainsets",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "insets",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [
+            "SafeArea"
+          ],
+          "type": "SafeArea"
+        }
+      ]
+    },
+    {
+      "name": "SafeArea",
+      "slug": "safearea",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "top",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number"
+        },
+        {
+          "name": "right",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number"
+        },
+        {
+          "name": "bottom",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number"
+        },
+        {
+          "name": "left",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "name": "StatusBarInfo",
+      "slug": "statusbarinfo",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "statusBarHeight",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "name": "NavigationBarOptions",
+      "slug": "navigationbaroptions",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "statusBarBg",
+          "tags": [],
+          "docs": "statusbar background color, default is transparent",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "statusBarStyle",
+          "tags": [],
+          "docs": "statusbar style",
+          "complexTypes": [
+            "StatusbarStyle"
+          ],
+          "type": "StatusbarStyle"
+        }
+      ]
+    },
+    {
+      "name": "PluginListenerHandle",
+      "slug": "pluginlistenerhandle",
+      "docs": "",
+      "tags": [],
+      "methods": [],
+      "properties": [
+        {
+          "name": "remove",
+          "tags": [],
+          "docs": "",
+          "complexTypes": [],
+          "type": "() => Promise<void>"
+        }
+      ]
+    }
+  ],
+  "enums": [
+    {
+      "name": "StatusbarStyle",
+      "slug": "statusbarstyle",
+      "members": [
+        {
+          "name": "Light",
+          "value": "'light'",
+          "tags": [],
+          "docs": ""
+        },
+        {
+          "name": "Dark",
+          "value": "'dark'",
+          "tags": [],
+          "docs": ""
+        }
+      ]
+    }
+  ],
+  "typeAliases": [
+    {
+      "name": "Pick",
+      "slug": "pick",
+      "docs": "From T, pick a set of properties whose keys are in the union K",
+      "types": [
+        {
+          "text": "{\r\n    [P in K]: T[P];\r\n}",
+          "complexTypes": [
+            "K",
+            "T",
+            "P"
+          ]
+        }
+      ]
+    }
+  ],
+  "pluginConfigs": []
+}

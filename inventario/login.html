@@ -185,7 +185,12 @@
             errorMsg.style.display = 'none';
 
             try {
-                const res = await fetch('/api/login', {
+                // Determine API URL based on protocol (capacitor uses custom protocols)
+                const apiUrl = window.location.protocol.includes('http')
+                    ? '/api/login'
+                    : 'https://inventario-pactra-eajv.onrender.com/api/login';
+
+                const res = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: user, password: pass })

@@ -11,6 +11,15 @@ window.fetch = async (...args) => {
   const headers = new Headers(config.headers || {});
   const token = localStorage.getItem('token');
 
+  // Handle mobile app environment vs web
+  const baseUrl = window.location.protocol.includes('http')
+    ? ''
+    : 'https://inventario-pactra-eajv.onrender.com';
+
+  if (typeof resource === 'string' && resource.startsWith('/api')) {
+    resource = baseUrl + resource;
+  }
+
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
@@ -18,9 +27,9 @@ window.fetch = async (...args) => {
   config.headers = headers;
   const response = await originalFetch(resource, config);
 
-  if (response.status === 401 && resource !== '/api/login') {
+  if (response.status === 401 && !resource.endsWith('/api/login')) {
     localStorage.removeItem('token');
-    window.location.href = '/login.html';
+    window.location.href = baseUrl ? 'login.html' : '/login.html';
   }
 
   return response;
