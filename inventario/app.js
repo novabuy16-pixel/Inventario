@@ -350,8 +350,11 @@ function applyFilters() {
   const dano = filterDanado.value;
 
   filteredRecords = records.filter(r => {
-    const matchQ = !q || [r.cliente, r.modelo, r.factura, r.contenedor, r.no_lote, String(r.id_movimiento)]
-      .some(f => f && f.toLowerCase().includes(q));
+    const matchQ = !q || [
+      r.cliente, r.modelo, r.factura, r.contenedor, r.no_lote,
+      String(r.id_movimiento), r.tipo_movimiento, fmtDate(r.fecha),
+      String(r.pallets), String(r.piezas)
+    ].some(f => f && f.toLowerCase().includes(q));
     const matchTipo = !tipo || r.tipo_movimiento === tipo;
     const matchDano = !dano || (dano === 'si' ? isDanado(r) : !isDanado(r));
     return matchQ && matchTipo && matchDano;
@@ -441,10 +444,26 @@ filterTipo.addEventListener('change', () => renderTable());
 filterDanado.addEventListener('change', () => renderTable());
 
 // ──────────────────────────────────────────────
+// ──────────────────────────────────────────────
 // DAÑADOS VIEW
 // ──────────────────────────────────────────────
+const danosSearch = document.getElementById('danosSearch');
+if (danosSearch) {
+  danosSearch.addEventListener('input', () => renderDanos());
+}
+
 function renderDanos() {
-  const danos = records.filter(r => isDanado(r));
+  const q = (danosSearch?.value || '').toLowerCase().trim();
+  let danos = records.filter(r => isDanado(r));
+
+  if (q) {
+    danos = danos.filter(r => [
+      r.cliente, r.modelo, r.factura, r.contenedor, r.no_lote,
+      String(r.id_movimiento), r.tipo_movimiento, fmtDate(r.fecha),
+      String(r.pallets), String(r.piezas)
+    ].some(f => f && f.toLowerCase().includes(q)));
+  }
+
   danosCountEl.textContent = `${danos.length} registro${danos.length !== 1 ? 's' : ''} con daño`;
   danosTbody.innerHTML = danos.length
     ? danos.map(r => `
@@ -467,7 +486,7 @@ function renderDanos() {
             </div>
           </td>
         </tr>`).join('')
-    : `<tr><td colspan="12"><div class="empty-state"><div class="empty-icon">✅</div><p>Sin artículos dañados registrados</p></div></td></tr>`;
+    : `<tr><td colspan="12"><div class="empty-state"><div class="empty-icon">✓</div><p>No se encontraron registros dañados que coincidan</p></div></td></tr>`;
 }
 
 // ──────────────────────────────────────────────
@@ -995,8 +1014,10 @@ function renderModeloDetalle(g) {
   if (modeloDetalleTitulo) modeloDetalleTitulo.textContent = `Movimientos del Modelo: ${g.nombre}`;
 
   const filteredRegistros = g.registros.filter(r => {
-    return !q || [r.contenedor, r.factura, r.no_lote, r.tipo_movimiento, String(r.id_movimiento)]
-      .some(f => f && f.toLowerCase().includes(q));
+    return !q || [
+      r.cliente, r.modelo, r.contenedor, r.factura, r.no_lote,
+      r.tipo_movimiento, String(r.id_movimiento), fmtDate(r.fecha)
+    ].some(f => f && f.toLowerCase().includes(q));
   });
 
   if (modeloDetalleCount) modeloDetalleCount.textContent = `${filteredRegistros.length} registro${filteredRegistros.length !== 1 ? 's' : ''}`;
