@@ -1427,3 +1427,72 @@ select:focus {
     max-height: 300px;
     overflow-y: auto;
 }
+
+/* ===========================
+   MOBILE RESPONSIVENESS (CAPACITOR)
+=========================== */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        width: 260px;
+        box-shadow: var(--shadow-modal);
+    }
+
+    .sidebar.mobile-open {
+        transform: translateX(0);
+    }
+
+    .main {
+        margin-left: 0 !important;
+    }
+
+    /* Mobile Overlay */
+    .mobile-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(3px);
+        z-index: 90;
+        opacity: 0;
+        transition: opacity var(--transition);
+    }
+
+    .mobile-overlay.active {
+        display: block;
+        opacity: 1;
+    }
+
+    .topbar {
+        padding: 0 16px;
+    }
+
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-box {
+        width: 100%;
+    }
+
+    .filter-group {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .dashboard-bottom {
+        display: flex;
+        flex-direction: column-reverse;
+    }
+
+    .modal {
+        width: 95%;
+        margin: 20px auto;
+        padding: 20px;
+    }
+}

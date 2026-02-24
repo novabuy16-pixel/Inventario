@@ -181,12 +181,26 @@ function updateDate() {
 updateDate();
 
 // ──────────────────────────────────────────────
-// SIDEBAR TOGGLE
+// SIDEBAR TOGGLE & MOBILE MENU
 // ──────────────────────────────────────────────
+const mobileOverlay = document.getElementById('mobileOverlay');
+
 sidebarToggle.addEventListener('click', () => {
-  sidebar.classList.toggle('collapsed');
-  mainEl.classList.toggle('expanded');
+  if (window.innerWidth <= 768) {
+    sidebar.classList.toggle('mobile-open');
+    mobileOverlay?.classList.toggle('active');
+  } else {
+    sidebar.classList.toggle('collapsed');
+    mainEl.classList.toggle('expanded');
+  }
 });
+
+if (mobileOverlay) {
+  mobileOverlay.addEventListener('click', () => {
+    sidebar.classList.remove('mobile-open');
+    mobileOverlay.classList.remove('active');
+  });
+}
 
 // ──────────────────────────────────────────────
 // NAVIGATION
@@ -210,6 +224,12 @@ function showView(name) {
   if (name === 'dañados') renderDanos();
   if (name === 'por-cliente') renderClientes();
   if (name === 'packing') initPackingView();
+
+  // Auto-close sidebar on mobile after navigation
+  if (window.innerWidth <= 768 && sidebar.classList.contains('mobile-open')) {
+    sidebar.classList.remove('mobile-open');
+    if (mobileOverlay) mobileOverlay.classList.remove('active');
+  }
 }
 
 document.querySelectorAll('.nav-item').forEach(item => {
