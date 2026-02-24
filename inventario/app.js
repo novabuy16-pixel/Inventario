@@ -916,12 +916,21 @@ function renderModeloDetalle(g) {
   const modeloDetalleCount = document.getElementById('modeloDetalleCount');
   const modeloDetalleTbody = document.getElementById('modeloDetalleTbody');
 
+  const searchInput = document.getElementById('modeloDetalleSearch');
+  const q = (searchInput?.value || '').toLowerCase().trim();
+
   if (modeloDetalleTitulo) modeloDetalleTitulo.textContent = `Movimientos del Modelo: ${g.nombre}`;
-  if (modeloDetalleCount) modeloDetalleCount.textContent = `${g.registros.length} registro${g.registros.length !== 1 ? 's' : ''}`;
+
+  const filteredRegistros = g.registros.filter(r => {
+    return !q || [r.contenedor, r.factura, r.no_lote, r.tipo_movimiento, String(r.id_movimiento)]
+      .some(f => f && f.toLowerCase().includes(q));
+  });
+
+  if (modeloDetalleCount) modeloDetalleCount.textContent = `${filteredRegistros.length} registro${filteredRegistros.length !== 1 ? 's' : ''}`;
   const modeloDetalle = document.getElementById('modeloDetalle');
   if (modeloDetalle) modeloDetalle.style.display = 'block';
 
-  const sorted = [...g.registros].sort((a, b) => {
+  const sorted = [...filteredRegistros].sort((a, b) => {
     if (b.fecha > a.fecha) return 1; if (b.fecha < a.fecha) return -1;
     return b.id_movimiento - a.id_movimiento;
   });
@@ -976,6 +985,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const md = document.getElementById('modeloDetalle');
       if (md) md.style.display = 'none';
       renderClientes();
+    });
+  }
+
+  const modeloDetalleSearch = document.getElementById('modeloDetalleSearch');
+  if (modeloDetalleSearch) {
+    modeloDetalleSearch.addEventListener('input', () => {
+      if (clienteActivo && modeloActivo) {
+        const g = groupByClienteLevel().find(x => x.nombre === modeloActivo);
+        if (g) renderModeloDetalle(g);
+      }
     });
   }
 
