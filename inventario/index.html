@@ -21,19 +21,58 @@
 </head>
 
 <body>
+    <!-- MOBILE OVERLAY -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <span class="logo-icon">📦</span>
+                <span class="logo-text">PACTRA</span>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle" title="Colapsar menú">&#9776;</button>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-view="dashboard" id="nav-dashboard">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-view="movimientos" id="nav-movimientos">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">Movimientos</span>
+            </a>
+            <a href="#" class="nav-item" data-view="dañados" id="nav-dañados">
+                <span class="nav-icon">⚠️</span>
+                <span class="nav-label">Dañados</span>
+                <span class="badge" id="badge-danos">0</span>
+            </a>
+            <a href="#" class="nav-item" data-view="por-cliente" id="nav-por-cliente">
+                <span class="nav-icon">🏢</span>
+                <span class="nav-label">Por Cliente / Modelo</span>
+            </a>
+            <a href="#" class="nav-item" data-view="packing" id="nav-packing">
+                <span class="nav-icon">📄</span>
+                <span class="nav-label">Packing List</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="#" class="nav-item" id="btnLogout"
+                style="padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px;">
+                <span class="nav-icon">🚪</span>
+                <span class="nav-label">Cerrar Sesión</span>
+            </a>
+            <span class="version">v1.1.0</span>
+        </div>
+    </aside>
+
     <!-- MAIN CONTENT -->
     <main class="main" id="main">
 
+        <!-- TOP BAR -->
         <header class="topbar">
-            <div class="topbar-left" style="display: flex; align-items: center; gap: 15px;">
-                <div class="logo"
-                    style="display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 20px; color: var(--primary);">
-                    <span class="logo-icon" style="font-size: 24px;">📦</span>
-                    <span class="logo-text">PACTRA</span>
-                </div>
-                <h1 class="page-title" id="pageTitle"
-                    style="margin-left: 10px; border-left: 2px solid var(--border); padding-left: 15px;">Movimientos
-                </h1>
+            <div class="topbar-left">
+                <h1 class="page-title" id="pageTitle">Dashboard</h1>
             </div>
             <div class="topbar-right">
                 <div class="topbar-date" id="topbarDate"></div>
@@ -43,29 +82,106 @@
                 <button class="btn btn-primary" id="btnNuevo">
                     <span>＋</span> Nuevo Movimiento
                 </button>
-                <button class="btn btn-secondary" id="btnLogout" title="Cerrar Sesión" style="padding: 0 12px;">
-                    <span style="font-size: 16px;">🚪</span>
-                </button>
             </div>
         </header>
 
         <!-- VIEWS -->
         <div class="content">
 
-            <!-- We only need the movimientos view now -->
+            <!-- ===== DASHBOARD VIEW ===== -->
+            <section class="view active" id="view-dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card" id="stat-total">
+                        <div class="stat-icon">📦</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statTotal">0</span>
+                            <span class="stat-label">Total Movimientos</span>
+                        </div>
+                    </div>
+                    <div class="stat-card" id="stat-entradas">
+                        <div class="stat-icon">⬇️</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statEntradas">0</span>
+                            <span class="stat-label">Entradas</span>
+                        </div>
+                    </div>
+                    <div class="stat-card" id="stat-salidas">
+                        <div class="stat-icon">⬆️</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statSalidas">0</span>
+                            <span class="stat-label">Salidas</span>
+                        </div>
+                    </div>
+                    <div class="stat-card danger" id="stat-danos">
+                        <div class="stat-icon">⚠️</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statDanos">0</span>
+                            <span class="stat-label">Con Daños</span>
+                        </div>
+                    </div>
+                    <div class="stat-card info" id="stat-pallets">
+                        <div class="stat-icon">🏗️</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statPallets">0</span>
+                            <span class="stat-label">Total Pallets</span>
+                        </div>
+                    </div>
+                    <div class="stat-card success" id="stat-piezas">
+                        <div class="stat-icon">🔩</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statPiezas">0</span>
+                            <span class="stat-label">Total Piezas</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-bottom">
+                    <div class="recent-table-wrapper">
+                        <div class="section-header">
+                            <h2>Movimientos Recientes</h2>
+                        </div>
+                        <div class="table-scroll">
+                            <table class="data-table" id="recentTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Tipo</th>
+                                        <th>Fecha</th>
+                                        <th>Cliente</th>
+                                        <th>Modelo</th>
+                                        <th>Piezas</th>
+                                        <th>Dañado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentTbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="tipo-breakdown">
+                        <div class="section-header">
+                            <h2>Por Tipo de Movimiento</h2>
+                        </div>
+                        <div id="tipoBreakdown" class="breakdown-list"></div>
+                    </div>
+                </div>
+            </section>
 
             <!-- ===== MOVIMIENTOS VIEW ===== -->
-            <section class="view active" id="view-movimientos">
-                <div class="toolbar" style="justify-content: center;">
+            <section class="view" id="view-movimientos">
+                <div class="toolbar">
                     <div class="search-box">
                         <span class="search-icon">🔍</span>
-                        <input type="text" id="searchInput" placeholder="Buscar registros..." />
+                        <input type="text" id="searchInput"
+                            placeholder="Buscar por cliente, modelo, factura, contenedor..." />
                     </div>
                     <div class="filter-group">
                         <select id="filterTipo" title="Filtrar por tipo">
-                            <option value="">Todos (Entradas/Salidas)</option>
+                            <option value="">Todos los tipos</option>
                             <option value="Entrada">Entrada</option>
                             <option value="Salida">Salida</option>
+                            <option value="Transferencia">Transferencia</option>
+                            <option value="Devolución">Devolución</option>
+                            <option value="Ajuste">Ajuste</option>
                         </select>
                         <select id="filterDanado" title="Filtrar por daño">
                             <option value="">Con y sin daño</option>
@@ -106,6 +222,251 @@
                 </div>
             </section>
 
+            <!-- ===== DAÑADOS VIEW ===== -->
+            <section class="view" id="view-dañados">
+                <div class="alert-banner">
+                    <span>⚠️</span>
+                    <span>Estos registros contienen artículos marcados como <strong>dañados</strong>. Requieren
+                        atención.</span>
+                </div>
+                <!-- Toolbar Dañados -->
+                <div class="toolbar" id="toolbar-danos">
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="danosSearch"
+                            placeholder="Buscar dañados por cliente, modelo, factura..." />
+                    </div>
+                </div>
+                <div class="table-scroll">
+                    <table class="data-table" id="danosTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tipo</th>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Contenedor</th>
+                                <th>Factura</th>
+                                <th>Modelo</th>
+                                <th>No. Lote</th>
+                                <th>Pallets</th>
+                                <th>Piezas</th>
+                                <th>Dañado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="danosTbody"></tbody>
+                    </table>
+                </div>
+                <div class="table-footer">
+                    <span id="danosCount">0 registros</span>
+                </div>
+            </section>
+
+            <!-- ===== POR CLIENTE VIEW ===== -->
+            <section class="view" id="view-por-cliente">
+
+                <!-- Toolbar cliente -->
+                <div class="toolbar" id="toolbar-cliente">
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="clienteSearch" placeholder="Buscar cliente..." />
+                    </div>
+                    <div class="filter-group">
+                        <select id="clienteSort" title="Ordenar por">
+                            <option value="nombre">Ordenar: A–Z</option>
+                            <option value="piezas_desc">Ordenar: Más piezas</option>
+                            <option value="movimientos_desc">Ordenar: Más movimientos</option>
+                            <option value="danos_desc">Ordenar: Más dañados</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Breadcrumb para regresar de Modelo a Cliente -->
+                <div id="breadcrumbCliente" style="display:none; margin-bottom: 12px; align-items: center; gap: 10px;">
+                    <button class="btn btn-secondary btn-sm" id="btnVolverClientes">← Volver a Clientes</button>
+                    <strong id="lblClienteSeleccionado" style="font-size:16px;"></strong>
+                </div>
+
+                <!-- Cards de cliente o modelo -->
+                <div class="modelo-grid" id="clienteGrid"></div>
+
+                <!-- Detalle de movimientos del modelo seleccionado -->
+                <div class="modelo-detalle" id="modeloDetalle" style="display:none">
+                    <div class="modelo-detalle-header">
+                        <div class="detalle-title-row">
+                            <h2 id="modeloDetalleTitulo">Movimientos del modelo</h2>
+                            <button class="btn btn-ghost btn-sm" id="btnCerrarDetalle">✕ Cerrar</button>
+                        </div>
+                        <div class="toolbar" style="margin-top: 15px;">
+                            <div class="search-box">
+                                <span class="search-icon">🔍</span>
+                                <input type="text" id="modeloDetalleSearch"
+                                    placeholder="Buscar por contenedor, factura, lote, tipo..." />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-scroll">
+                        <table class="data-table" id="modeloDetalleTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tipo</th>
+                                    <th>Fecha</th>
+                                    <th>Cliente</th>
+                                    <th>Contenedor</th>
+                                    <th>Factura</th>
+                                    <th>No. Lote</th>
+                                    <th>Pallets</th>
+                                    <th>Piezas</th>
+                                    <th>Dañado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modeloDetalleTbody"></tbody>
+                        </table>
+                    </div>
+                    <div class="table-footer">
+                        <span id="modeloDetalleCount">0 registros</span>
+                    </div>
+                </div>
+
+                <div class="table-footer" style="margin-top:12px">
+                    <span id="clienteCount">0 clientes</span>
+                </div>
+            </section>
+
+            <!-- ===== PACKING LIST VIEW ===== -->
+            <section id="view-packing" class="view">
+                <div class="view-header">
+                    <div class="toolbar">
+                        <div class="toolbar-left">
+                            <h2 style="font-size:15px;font-weight:700">Generar Packing List — Daewon</h2>
+                        </div>
+                        <div class="toolbar-right">
+                            <button class="btn btn-secondary" id="btnResetPacking" type="button">🔄 Limpiar</button>
+                            <button class="btn btn-primary" id="btnGenerarPDF" type="button">📄 Generar PDF</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="packing-wrap">
+                    <form id="packingForm" class="packing-form">
+
+                        <!-- Row 1 -->
+                        <div class="pk-row">
+                            <div class="form-group">
+                                <label>Cliente</label>
+                                <select id="pk_cliente">
+                                    <option value="">— Seleccionar cliente —</option>
+                                    <option value="DONGJIN">DONGJIN</option>
+                                    <option value="TAESUNG">TAESUNG</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Modelo *</label>
+                                <select id="pk_modelo">
+                                    <option value="">— Cargando... —</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Invoice No.</label>
+                                <input type="text" id="pk_invoice_no" placeholder="Ej. PACT-2024-001" />
+                            </div>
+                            <div class="form-group">
+                                <label>Invoice Date</label>
+                                <input type="date" id="pk_invoice_date" />
+                            </div>
+                        </div>
+
+                        <!-- Row 2 -->
+                        <div class="pk-row">
+                            <div class="form-group">
+                                <label>Contenedor</label>
+                                <select id="pk_container">
+                                    <option value="">— Selecciona modelo —</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>No. Lote</label>
+                                <input type="text" id="pk_lote" placeholder="Número de lote" />
+                            </div>
+                            <div class="form-group">
+                                <label>Ciudad destino</label>
+                                <input type="text" id="pk_ciudad" placeholder="Ej. Pyeongtaek, Korea" />
+                            </div>
+                            <div class="form-group">
+                                <label>Dirección cliente</label>
+                                <input type="text" id="pk_direccion" placeholder="Dirección de Daewon" />
+                            </div>
+                        </div>
+
+                        <!-- Row 3: steppers -->
+                        <div class="pk-row">
+                            <div class="form-group">
+                                <label>Pallets</label>
+                                <div class="pk-stepper">
+                                    <button type="button" class="stepper-btn"
+                                        onclick="pkStep('pk_pallets',-1)">−</button>
+                                    <input type="number" id="pk_pallets" value="0" min="0" />
+                                    <button type="button" class="stepper-btn"
+                                        onclick="pkStep('pk_pallets',1)">+</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Sacos</label>
+                                <div class="pk-stepper">
+                                    <button type="button" class="stepper-btn" onclick="pkStep('pk_sacos',-1)">−</button>
+                                    <input type="number" id="pk_sacos" value="0" min="0" />
+                                    <button type="button" class="stepper-btn" onclick="pkStep('pk_sacos',1)">+</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Peso Neto (kg)</label>
+                                <div class="pk-stepper">
+                                    <button type="button" class="stepper-btn" onclick="pkStep('pk_peso',-1)">−</button>
+                                    <input type="number" id="pk_peso" value="0" min="0" step="0.01" />
+                                    <button type="button" class="stepper-btn" onclick="pkStep('pk_peso',1)">+</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Peso Bruto (kg)</label>
+                                <input type="number" id="pk_peso_bruto" value="0" min="0" step="0.01" />
+                            </div>
+                        </div>
+
+                        <!-- Row 4 -->
+                        <div class="pk-row">
+                            <div class="form-group">
+                                <label>Truck (Camión)</label>
+                                <input type="text" id="pk_truck" placeholder="No. económico o nombre" />
+                            </div>
+                            <div class="form-group">
+                                <label>Driver (Conductor)</label>
+                                <input type="text" id="pk_driver" placeholder="Nombre del conductor" />
+                            </div>
+                            <div class="form-group">
+                                <label>Plates (Placas)</label>
+                                <input type="text" id="pk_plates" placeholder="Placas del vehículo" />
+                            </div>
+                            <div class="form-group">
+                                <label>Remarks (Observaciones)</label>
+                                <input type="text" id="pk_remarks" placeholder="Opcional" />
+                            </div>
+                        </div>
+
+                    </form>
+
+                    <!-- Live preview -->
+                    <div class="packing-preview-box" id="packingPreviewBox">
+                        <div class="packing-preview-header">
+                            <span>👁 Vista previa</span>
+                        </div>
+                        <div class="packing-preview-body" id="packingPreviewBody"></div>
+                    </div>
+                </div>
+            </section>
+
         </div><!-- /content -->
     </main>
 
@@ -126,6 +487,9 @@
                             <option value="">Seleccionar...</option>
                             <option value="Entrada">Entrada</option>
                             <option value="Salida">Salida</option>
+                            <option value="Transferencia">Transferencia</option>
+                            <option value="Devolución">Devolución</option>
+                            <option value="Ajuste">Ajuste</option>
                         </select>
                     </div>
                     <div class="form-group">
