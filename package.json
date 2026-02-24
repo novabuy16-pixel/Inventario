@@ -8,7 +8,9 @@
     },
     "dependencies": {
         "docxtemplater": "^3.68.2",
+        "dotenv": "^17.3.1",
         "express": "^4.19.2",
+        "pg": "^8.18.0",
         "pizzip": "^3.2.0",
         "puppeteer-core": "^24.37.5",
         "sql.js": "^1.12.0"

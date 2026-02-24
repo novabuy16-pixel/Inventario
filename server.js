@@ -25,65 +25,28 @@ const app = express();
 const PORT = 3000;
 const DB_PATH = path.join(__dirname, 'inventario.db');
 
-// ── Iniciar sql.js (async) ───────────────────────────────────
-let db; // será el objeto Database de sql.js
+// ── Base de Datos en la Nube (PostgreSQL / Supabase) ───────────
+const { Pool } = require('pg');
+require('dotenv').config();
+
+let pool;
 
 async function initDB() {
-    const initSqlJs = require('sql.js');
-    const SQL = await initSqlJs();
+    pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }
+    });
 
-    // Cargar base de datos existente o crear nueva
-    if (fs.existsSync(DB_PATH)) {
-        const fileBuffer = fs.readFileSync(DB_PATH);
-        db = new SQL.Database(fileBuffer);
-        console.log('  📂 Base de datos cargada:', DB_PATH);
-    } else {
-        db = new SQL.Database();
-        console.log('  🆕 Nueva base de datos creada:', DB_PATH);
-    }
-
-    // Crear tabla si no existe
-    db.run(`
-        CREATE TABLE IF NOT EXISTS movimientos (
-            id_movimiento   INTEGER PRIMARY KEY AUTOINCREMENT,
-            tipo_movimiento TEXT    DEFAULT '',
-            fecha           TEXT    DEFAULT '',
-            cliente         TEXT    DEFAULT '',
-            contenedor      TEXT    DEFAULT '',
-            factura         TEXT    DEFAULT '',
-            modelo          TEXT    DEFAULT '',
-            no_lote         TEXT    DEFAULT '',
-            pallets         INTEGER DEFAULT 0,
-            piezas          INTEGER DEFAULT 0,
-            piezas_danadas  INTEGER DEFAULT 0,
-            danado          INTEGER DEFAULT 0
-        )
-    `);
-    saveDB(); // guardar estructura inicial
+    // Check connection mapping
+    pool.connect((err, client, release) => {
+        if (err) {
+            return console.error('❌ Error adquiriendo cliente de PostgreSQL', err.stack);
+        }
+        console.log('  📂 Conectado a PostgreSQL (Supabase)');
+        release();
+    });
 }
 
-// ── Guardar db al disco ──────────────────────────────────────
-function saveDB() {
-    const data = db.export();
-    fs.writeFileSync(DB_PATH, Buffer.from(data));
-}
-
-// ── Helper: query que devuelve array de objetos ──────────────
-function queryAll(sql, params = []) {
-    const stmt = db.prepare(sql);
-    stmt.bind(params);
-    const rows = [];
-    while (stmt.step()) rows.push(stmt.getAsObject());
-    stmt.free();
-    return rows;
-}
-
-function queryRun(sql, params = []) {
-    db.run(sql, params);
-    return db.exec('SELECT last_insert_rowid() as id')[0]?.values[0][0];
-}
-
-// ── Convertir fila a objeto JS ───────────────────────────────
 function toJS(row) {
     return {
         id_movimiento: row.id_movimiento,
@@ -108,101 +71,106 @@ app.use(express.static(path.join(__dirname, 'inventario')));
 // ── API REST ─────────────────────────────────────────────────
 
 // GET /api/movimientos
-app.get('/api/movimientos', (req, res) => {
+app.get('/api/movimientos', async (req, res) => {
     try {
-        const rows = queryAll('SELECT * FROM movimientos ORDER BY id_movimiento ASC');
+        const { rows } = await pool.query('SELECT * FROM movimientos ORDER BY id_movimiento ASC');
         res.json(rows.map(toJS));
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // POST /api/movimientos/bulk  — importación masiva (va ANTES de /:id)
-app.post('/api/movimientos/bulk', (req, res) => {
+app.post('/api/movimientos/bulk', async (req, res) => {
     try {
         const { rows = [], replace = false } = req.body;
-        if (replace) db.run('DELETE FROM movimientos');
+        if (replace) await pool.query('TRUNCATE TABLE movimientos RESTART IDENTITY');
 
         const sql = `INSERT INTO movimientos
             (tipo_movimiento,fecha,cliente,contenedor,factura,modelo,no_lote,pallets,piezas,piezas_danadas,danado)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?)`;
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`;
 
-        for (const r of rows) {
-            const pzDan = parseInt(r.piezas_danadas) || 0;
-            db.run(sql, [
-                r.tipo_movimiento || '', r.fecha || '', r.cliente || '',
-                r.contenedor || '', r.factura || '', r.modelo || '', r.no_lote || '',
-                parseInt(r.pallets) || 0, parseInt(r.piezas) || 0, pzDan,
-                (pzDan > 0 || r.dañado) ? 1 : 0,
-            ]);
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            for (const r of rows) {
+                const pzDan = parseInt(r.piezas_danadas) || 0;
+                await client.query(sql, [
+                    r.tipo_movimiento || '', r.fecha || '', r.cliente || '',
+                    r.contenedor || '', r.factura || '', r.modelo || '', r.no_lote || '',
+                    parseInt(r.pallets) || 0, parseInt(r.piezas) || 0, pzDan,
+                    (pzDan > 0 || r.dañado) ? 1 : 0,
+                ]);
+            }
+            await client.query('COMMIT');
+        } catch (e) {
+            await client.query('ROLLBACK');
+            throw e;
+        } finally {
+            client.release();
         }
-        saveDB();
         res.json({ ok: true, count: rows.length });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // POST /api/movimientos — crear uno
-app.post('/api/movimientos', (req, res) => {
+app.post('/api/movimientos', async (req, res) => {
     try {
         const r = req.body;
         const pzDan = parseInt(r.piezas_danadas) || 0;
         const sql = `INSERT INTO movimientos
             (tipo_movimiento,fecha,cliente,contenedor,factura,modelo,no_lote,pallets,piezas,piezas_danadas,danado)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?)`;
-        const lastId = queryRun(sql, [
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`;
+        const { rows } = await pool.query(sql, [
             r.tipo_movimiento || '', r.fecha || '', r.cliente || '',
             r.contenedor || '', r.factura || '', r.modelo || '', r.no_lote || '',
             parseInt(r.pallets) || 0, parseInt(r.piezas) || 0, pzDan,
             (pzDan > 0 || r.dañado) ? 1 : 0,
         ]);
-        saveDB();
-        const newRow = queryAll('SELECT * FROM movimientos WHERE id_movimiento=?', [lastId])[0];
-        res.json(toJS(newRow));
+        res.json(toJS(rows[0]));
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // PUT /api/movimientos/:id
-app.put('/api/movimientos/:id', (req, res) => {
+app.put('/api/movimientos/:id', async (req, res) => {
     try {
         const r = req.body;
         const pzDan = parseInt(r.piezas_danadas) || 0;
-        db.run(`UPDATE movimientos SET
-            tipo_movimiento=?,fecha=?,cliente=?,contenedor=?,factura=?,
-            modelo=?,no_lote=?,pallets=?,piezas=?,piezas_danadas=?,danado=?
-            WHERE id_movimiento=?`, [
+        await pool.query(`UPDATE movimientos SET
+            tipo_movimiento=$1,fecha=$2,cliente=$3,contenedor=$4,factura=$5,
+            modelo=$6,no_lote=$7,pallets=$8,piezas=$9,piezas_danadas=$10,danado=$11
+            WHERE id_movimiento=$12`, [
             r.tipo_movimiento || '', r.fecha || '', r.cliente || '',
             r.contenedor || '', r.factura || '', r.modelo || '', r.no_lote || '',
             parseInt(r.pallets) || 0, parseInt(r.piezas) || 0, pzDan,
             (pzDan > 0 || r.dañado) ? 1 : 0,
             parseInt(req.params.id),
         ]);
-        saveDB();
         res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // DELETE /api/movimientos/:id
-app.delete('/api/movimientos/:id', (req, res) => {
+app.delete('/api/movimientos/:id', async (req, res) => {
     try {
-        db.run('DELETE FROM movimientos WHERE id_movimiento=?', [parseInt(req.params.id)]);
-        saveDB();
+        await pool.query('DELETE FROM movimientos WHERE id_movimiento=$1', [parseInt(req.params.id)]);
         res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // GET /api/modelos — modelos únicos del inventario
-app.get('/api/modelos', (req, res) => {
+app.get('/api/modelos', async (req, res) => {
     try {
-        const rows = queryAll("SELECT DISTINCT modelo FROM movimientos WHERE modelo != '' ORDER BY modelo ASC");
+        const { rows } = await pool.query("SELECT DISTINCT modelo FROM movimientos WHERE modelo != '' ORDER BY modelo ASC");
         res.json(rows.map(r => r.modelo));
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // GET /api/contenedores?modelo=xxx  — versión con query param (maneja chars especiales)
-app.get('/api/contenedores', (req, res) => {
+app.get('/api/contenedores', async (req, res) => {
     try {
         const modelo = req.query.modelo || '';
         if (!modelo) return res.json([]);
-        const rows = queryAll(
-            "SELECT DISTINCT contenedor FROM movimientos WHERE modelo=? AND contenedor != '' ORDER BY contenedor ASC",
+        const { rows } = await pool.query(
+            "SELECT DISTINCT contenedor FROM movimientos WHERE modelo=$1 AND contenedor != '' ORDER BY contenedor ASC",
             [modelo]
         );
         res.json(rows.map(r => r.contenedor));
@@ -210,16 +178,17 @@ app.get('/api/contenedores', (req, res) => {
 });
 
 // GET /api/contenedores/:modelo — versión con path param (compatibilidad)
-app.get('/api/contenedores/:modelo', (req, res) => {
+app.get('/api/contenedores/:modelo', async (req, res) => {
     try {
         const modelo = decodeURIComponent(req.params.modelo);
-        const rows = queryAll(
-            "SELECT DISTINCT contenedor FROM movimientos WHERE modelo=? AND contenedor != '' ORDER BY contenedor ASC",
+        const { rows } = await pool.query(
+            "SELECT DISTINCT contenedor FROM movimientos WHERE modelo=$1 AND contenedor != '' ORDER BY contenedor ASC",
             [modelo]
         );
         res.json(rows.map(r => r.contenedor));
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
 
 
 // POST /api/packing-list — rellena la plantilla DOCX con los datos del formulario
@@ -408,7 +377,7 @@ initDB().then(() => {
         console.log('║   📦  Inventario Pactra  —  Servidor OK  ║');
         console.log('╠══════════════════════════════════════════╣');
         console.log(`║  🌐  http://localhost:${PORT}               ║`);
-        console.log(`║  🗄️   Base de datos: inventario.db         ║`);
+        console.log(`║  🗄️   Base de datos: PostgreSQL (Supabase) ║`);
         console.log('║  🛑  Para detener: Ctrl + C               ║');
         console.log('╚══════════════════════════════════════════╝\n');
     });
