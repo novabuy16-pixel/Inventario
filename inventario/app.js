@@ -183,53 +183,24 @@ updateDate();
 // ──────────────────────────────────────────────
 // SIDEBAR TOGGLE & MOBILE MENU
 // ──────────────────────────────────────────────
-const mobileOverlay = document.getElementById('mobileOverlay');
-
-sidebarToggle.addEventListener('click', () => {
-  if (window.innerWidth <= 768) {
-    sidebar.classList.toggle('mobile-open');
-    mobileOverlay?.classList.toggle('active');
-  } else {
-    sidebar.classList.toggle('collapsed');
-    mainEl.classList.toggle('expanded');
-  }
-});
-
-if (mobileOverlay) {
-  mobileOverlay.addEventListener('click', () => {
-    sidebar.classList.remove('mobile-open');
-    mobileOverlay.classList.remove('active');
-  });
-}
+// ──────────────────────────────────────────────
+// SIDEBAR & MOBILE MENU (REMOVED)
+// ──────────────────────────────────────────────
 
 // ──────────────────────────────────────────────
 // NAVIGATION
 // ──────────────────────────────────────────────
 const views = {
-  dashboard: { el: document.getElementById('view-dashboard'), title: 'Dashboard', navId: 'nav-dashboard' },
   movimientos: { el: document.getElementById('view-movimientos'), title: 'Movimientos', navId: 'nav-movimientos' },
-  'dañados': { el: document.getElementById('view-dañados'), title: 'Artículos Dañados', navId: 'nav-dañados' },
-  'por-cliente': { el: document.getElementById('view-por-cliente'), title: 'Inventario por Cliente', navId: 'nav-por-cliente' },
-  'packing': { el: document.getElementById('view-packing'), title: 'Packing List', navId: 'nav-packing' },
 };
 
 function showView(name) {
   Object.entries(views).forEach(([key, v]) => {
-    v.el.classList.toggle('active', key === name);
-    document.getElementById(v.navId).classList.toggle('active', key === name);
+    if (v.el) v.el.classList.toggle('active', key === name);
+    if (document.getElementById(v.navId)) document.getElementById(v.navId).classList.toggle('active', key === name);
   });
-  pageTitleEl.textContent = views[name]?.title || '';
-  if (name === 'dashboard') renderDashboard();
+  if (pageTitleEl) pageTitleEl.textContent = views[name]?.title || '';
   if (name === 'movimientos') renderTable();
-  if (name === 'dañados') renderDanos();
-  if (name === 'por-cliente') renderClientes();
-  if (name === 'packing') initPackingView();
-
-  // Auto-close sidebar on mobile after navigation
-  if (window.innerWidth <= 768 && sidebar.classList.contains('mobile-open')) {
-    sidebar.classList.remove('mobile-open');
-    if (mobileOverlay) mobileOverlay.classList.remove('active');
-  }
 }
 
 document.querySelectorAll('.nav-item').forEach(item => {
@@ -1140,7 +1111,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ──────────────────────────────────────────────
 async function init() {
   await reloadRecords();
-  showView('dashboard');
+  showView('movimientos');
 }
 
 init();
