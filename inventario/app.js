@@ -1,7 +1,30 @@
 ﻿/* ============================================================
    app.js  —  Inventario Pactra
-   Frontend conectado a la API REST del servidor (SQLite)
+   Frontend conectado a la API REST del servidor
 ============================================================ */
+
+// Fetch Interceptor for Auth
+const originalFetch = window.fetch;
+window.fetch = async (...args) => {
+  let [resource, config] = args;
+  config = config || {};
+  const headers = new Headers(config.headers || {});
+  const token = localStorage.getItem('token');
+
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  config.headers = headers;
+  const response = await originalFetch(resource, config);
+
+  if (response.status === 401 && resource !== '/api/login') {
+    localStorage.removeItem('token');
+    window.location.href = '/login.html';
+  }
+
+  return response;
+};
 
 // ──────────────────────────────────────────────
 // API LAYER  (reemplaza localStorage)
@@ -957,6 +980,16 @@ function renderModeloDetalle(g) {
 
 // Inicialización de eventos para Cliente View
 document.addEventListener('DOMContentLoaded', () => {
+
+  const btnLogout = document.getElementById('btnLogout');
+  if (btnLogout) {
+    btnLogout.addEventListener('click', (e) => {
+      e.preventDefault();
+      localStorage.removeItem('token');
+      window.location.href = '/login.html';
+    });
+  }
+
   const btnVolverClientes = document.getElementById('btnVolverClientes');
   if (btnVolverClientes) {
     btnVolverClientes.addEventListener('click', () => {

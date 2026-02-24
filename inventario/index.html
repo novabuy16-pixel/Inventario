@@ -13,6 +13,11 @@
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="packing.css" />
 
+    <script>
+        if (!localStorage.getItem('token')) {
+            window.location.href = '/login.html';
+        }
+    </script>
 </head>
 
 <body>
@@ -50,7 +55,12 @@
             </a>
         </nav>
         <div class="sidebar-footer">
-            <span class="version">v1.0.0</span>
+            <a href="#" class="nav-item" id="btnLogout"
+                style="padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px;">
+                <span class="nav-icon">🚪</span>
+                <span class="nav-label">Cerrar Sesión</span>
+            </a>
+            <span class="version">v1.1.0</span>
         </div>
     </aside>
 

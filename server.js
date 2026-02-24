@@ -10,6 +10,11 @@ const os = require('os');
 const PizZip = require('pizzip');
 const Docxtemplater = require('docxtemplater');
 const puppeteer = require('puppeteer-core');
+const jwt = require('jsonwebtoken');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'pactrasecret_key_2026_xYz';
+const ADMIN_USER = process.env.ADMIN_USER || 'admin';
+const ADMIN_PASS = process.env.ADMIN_PASS || 'pactra2026';
 
 // Busca Chrome o Edge instalado en el sistema
 const CHROME_PATHS = [
@@ -69,6 +74,32 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'inventario')));
 
 // ── API REST ─────────────────────────────────────────────────
+
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+    if (username === ADMIN_USER && password === ADMIN_PASS) {
+        const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '24h' });
+        res.json({ token });
+    } else {
+        res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+});
+
+app.use('/api', (req, res, next) => {
+    if (req.path === '/login') return next();
+
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+        const token = authHeader.split(' ')[1];
+        jwt.verify(token, JWT_SECRET, (err, decoded) => {
+            if (err) return res.status(401).json({ error: 'No autorizado' });
+            req.user = decoded;
+            next();
+        });
+    } else {
+        res.status(401).json({ error: 'Token requerido' });
+    }
+});
 
 // GET /api/movimientos
 app.get('/api/movimientos', async (req, res) => {
